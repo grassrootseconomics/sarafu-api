@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"git.grassecon.net/grassrootseconomics/visedriver/models"
+	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
 
