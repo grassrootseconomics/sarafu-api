@@ -7,7 +7,7 @@ import (
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
 
-type AccountServiceInterface interface {
+type AccountService interface {
 	CheckBalance(ctx context.Context, publicKey string) (*models.BalanceResult, error)
 	CreateAccount(ctx context.Context) (*models.AccountResult, error)
 	TrackAccountStatus(ctx context.Context, publicKey string) (*models.TrackStatusResult, error)
