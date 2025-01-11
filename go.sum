@@ -1,5 +1,5 @@
-git.grassecon.net/grassrootseconomics/visedriver v0.8.0-beta.10.0.20250111151614-46bf21b7b8bd h1:mKCov8udBJBQuMF3aFg38SkClL8OvAUZmtArNzgIPak=
-git.grassecon.net/grassrootseconomics/visedriver v0.8.0-beta.10.0.20250111151614-46bf21b7b8bd/go.mod h1:E6W7ZOa7ZvVr0Bc5ot0LNSwpSPYq4hXlAIvEPy3AJ7U=
+git.grassecon.net/grassrootseconomics/visedriver v0.8.0-beta.10.0.20250111163106-c93a07832daa h1:owrXxiDOp7uuyvGxi4DU8gu8PyA7YxVnX8bo7i28Anw=
+git.grassecon.net/grassrootseconomics/visedriver v0.8.0-beta.10.0.20250111163106-c93a07832daa/go.mod h1:E6W7ZOa7ZvVr0Bc5ot0LNSwpSPYq4hXlAIvEPy3AJ7U=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/grassrootseconomics/eth-custodial v1.3.0-beta h1:twrMBhl89GqDUL9PlkzQxMP/6OST1BByrNDj+rqXDmU=
