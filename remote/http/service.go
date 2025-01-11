@@ -219,6 +219,7 @@ func (as *HTTPAccountService) CheckAliasAddress(ctx context.Context, alias strin
 	return &r, err
 }
 
+// TODO: remove eth-custodial api dependency
 func doRequest(ctx context.Context, req *http.Request, rcpt any) (*api.OKResponse, error) {
 	var okResponse api.OKResponse
 	var errResponse api.ErrResponse
