@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
+	"time"
 
 	"github.com/gofrs/uuid"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
@@ -16,11 +17,21 @@ const (
 	pubKeyLen int = 20
 )
 
+type tx struct {
+	hsh string
+	to string
+	from string
+	voucher string
+	value int
+	when time.Time
+}
+
 type account struct {
 	track string
 	nonce int
 	defaultVoucher string
 	balances map[string]int
+	txs []tx
 }
 
 type voucher struct {
@@ -120,4 +131,32 @@ func (das *DevAccountService) FetchVouchers(ctx context.Context, publicKey strin
 		})
 	}
 	return holdings, nil
+}
+
+func (das *DevAccountService) FetchTransactions(ctx context.Context, publicKey string) ([]dataserviceapi.Last10TxResponse, error) {
+	var lasttx []dataserviceapi.Last10TxResponse
+	acc, ok := das.accounts[publicKey]
+	if !ok {
+		return nil, fmt.Errorf("account not found (publickey): %v", publicKey)
+	}
+	for i, v := range(acc.txs) {
+		if i == 10 {
+			break	
+		}
+		voucher, ok := vouchers[v.voucher]
+		if !ok {
+			return nil, fmt.Errorf("voucher %s in tx list but not found in voucher list", v.voucher)
+		}
+		lasttx = append(lasttx, dataserviceapi.Last10TxResponse{
+			Sender: v.from,
+			Recipient: v.to,
+			TransferValue: strconv.Itoa(v.value),
+			ContractAddress: voucher.address,
+			TxHash: v.hsh,
+			DateBlock: v.when,
+			TokenSymbol: voucher.symbol,
+			TokenDecimals: strconv.Itoa(voucher.decimals),
+		})
+	}
+	return lasttx, nil
 }
