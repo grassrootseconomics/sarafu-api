@@ -3,6 +3,7 @@ module git.grassecon.net/grassrootseconomics/sarafu-api
 go 1.23.4
 
 require (
+	git.defalsify.org/vise.git v0.2.3-0.20250103172917-3e190a44568d
 	git.grassecon.net/grassrootseconomics/visedriver v0.8.0-beta.10.0.20250112121325-9e4c65c8b4d1
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/grassrootseconomics/eth-custodial v1.3.0-beta

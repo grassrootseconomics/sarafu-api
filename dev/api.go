@@ -9,14 +9,20 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
+	"git.defalsify.org/vise.git/logging"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
+)
+
+var (
+	logg = logging.NewVanilla().WithDomain("sarafu-api.devapi")
 )
 
 const (
 	pubKeyLen int = 20
 	hashLen int = 32
 	defaultDecimals = 6
+	zeroAccount string = "0x0000000000000000000000000000000000000000"
 )
 
 type tx struct {
@@ -57,6 +63,9 @@ type DevAccountService struct {
 	txs map[string]tx
 	txsTrack map[string]string
 	toAutoCreate bool
+	autoVouchers []string
+	autoVoucherValue map[string]int
+	defaultAccount string
 //	accountsSession map[string]string
 }
 
@@ -69,7 +78,19 @@ func NewDevAccountService() *DevAccountService {
 		vouchersAddress: make(map[string]string),
 		txs: make(map[string]tx),
 		txsTrack: make(map[string]string),
+		autoVoucherValue: make(map[string]int),
 	}
+}
+
+func (das *DevAccountService) WithAutoVoucher(ctx context.Context, v voucher, value int) *DevAccountService {
+	err := das.AddVoucher(v)
+	if err != nil {
+		logg.ErrorCtxf(ctx, "cannot add autovoucher %s: %v", v, err)
+		return das
+	}
+	das.autoVouchers = append(das.autoVouchers, v.symbol)
+	das.autoVoucherValue[v.symbol] = value
+	return das
 }
 
 func (das *DevAccountService) AddVoucher(v voucher) error {
@@ -105,6 +126,23 @@ func (das *DevAccountService) CheckBalance(ctx context.Context, publicKey string
 	}, nil
 }
 
+func (das *DevAccountService) balanceAuto(ctx context.Context, pubKey string) error {
+	for _, v := range(das.autoVouchers) {
+		voucher, ok := das.vouchers[v]
+		if !ok {
+			return fmt.Errorf("balance auto voucher set but not resolved: %s", v)
+		}
+		value, ok := das.autoVoucherValue[v]
+		if !ok {
+			value = 0
+		}
+		_, err := das.TokenTransfer(ctx, strconv.Itoa(value), das.defaultAccount, pubKey, voucher.address)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 func (das *DevAccountService) CreateAccount(ctx context.Context) (*models.AccountResult, error) {
 	var b [pubKeyLen]byte
@@ -125,6 +163,11 @@ func (das *DevAccountService) CreateAccount(ctx context.Context) (*models.Accoun
 		address: pubKey,
 	}
 	das.accountsTrack[uid.String()] = pubKey
+	das.balanceAuto(ctx, pubKey)
+
+	if das.defaultAccount == zeroAccount {
+		das.defaultAccount = pubKey
+	}
 	return &models.AccountResult{
 		PublicKey: pubKey,
 		TrackingId: uid.String(),
