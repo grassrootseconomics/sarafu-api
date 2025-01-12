@@ -35,13 +35,18 @@ type account struct {
 }
 
 type voucher struct {
+	name string
 	address string
 	symbol string
 	decimals int
+	sink string
+	commodity string
+	location string
 }
 
 var (
 	vouchers = make(map[string]voucher)
+	vouchersAddress = make(map[string]string)
 )
 
 type DevAccountService struct {
@@ -159,4 +164,24 @@ func (das *DevAccountService) FetchTransactions(ctx context.Context, publicKey s
 		})
 	}
 	return lasttx, nil
+}
+
+func (das *DevAccountService) VoucherData(ctx context.Context, address string) (*models.VoucherDataResult, error) {
+	sym, ok := vouchersAddress[address]
+	if !ok {
+		return nil, fmt.Errorf("voucher address %v not found", address)
+	}
+	voucher, ok := vouchers[sym]
+	if !ok {
+		return nil, fmt.Errorf("voucher address %v found but does not resolve", address)
+	}
+	return &models.VoucherDataResult{
+		TokenName: voucher.name,
+		TokenSymbol: voucher.symbol,
+		TokenDecimals: voucher.decimals,
+		SinkAddress: voucher.sink,
+		TokenCommodity: voucher.commodity,
+		TokenLocation: voucher.location,
+
+	}, nil
 }
