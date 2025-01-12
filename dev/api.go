@@ -26,42 +26,42 @@ const (
 	zeroAccount string = "0x0000000000000000000000000000000000000000"
 )
 
-type tx struct {
-	hsh string
-	to string
-	from string
-	voucher string
-	value int
-	when time.Time
-	track string
+type Tx struct {
+	Track string `json: "track"`
+	Hsh string `json:"hash"`
+	To string `json:"to"`
+	From string `json: "from"`
+	Voucher string `json: "voucher"`
+	Value int `json: "value"`
+	When time.Time `json: "when"`
 }
 
-type account struct {
-	track string
-	address string
-	nonce int
-	defaultVoucher string
-	balances map[string]int
-	txs []string
+type Account struct {
+	Track string `json: "track"`
+	Address string `json: "address"`
+	Nonce int `json: "nonce"`
+	DefaultVoucher string `json: "defaultVoucher"`
+	Balances map[string]int `json: "balances"` 
+	Txs []string `json: "txs"`
 }
 
-type voucher struct {
-	name string
-	address string
-	symbol string
-	decimals int
-	sink string
-	commodity string
-	location string
+type Voucher struct {
+	Name string `json: "name"`
+	Address string `json: "address"`
+	Symbol string `json: "symbol"`
+	Decimals int `json: "decimals"`
+	Sink string `json: "sink"`
+	Commodity string `json: "commodity"`
+	Location string `json: "location"`
 }
 
 type DevAccountService struct {
-	accounts map[string]account
+	accounts map[string]Account
 	accountsTrack map[string]string
 	accountsAlias map[string]string
-	vouchers map[string]voucher
+	vouchers map[string]Voucher
 	vouchersAddress map[string]string
-	txs map[string]tx
+	txs map[string]Tx
 	txsTrack map[string]string
 	toAutoCreate bool
 	autoVouchers []string
@@ -72,12 +72,12 @@ type DevAccountService struct {
 
 func NewDevAccountService() *DevAccountService {
 	return &DevAccountService{
-		accounts: make(map[string]account),
+		accounts: make(map[string]Account),
 		accountsTrack: make(map[string]string),
 		accountsAlias: make(map[string]string),
-		vouchers: make(map[string]voucher),
+		vouchers: make(map[string]Voucher),
 		vouchersAddress: make(map[string]string),
-		txs: make(map[string]tx),
+		txs: make(map[string]Tx),
 		txsTrack: make(map[string]string),
 		autoVoucherValue: make(map[string]int),
 	}
@@ -100,16 +100,16 @@ func (das *DevAccountService) AddVoucher(ctx context.Context, symbol string) err
 	}
 	v, ok := das.vouchers[symbol]
 	if ok {
-		return fmt.Errorf("already have voucher with symbol %s", v.symbol)
+		return fmt.Errorf("already have voucher with symbol %s", v.Symbol)
 	}
 	h := sha1.New()
 	h.Write([]byte(symbol))
 	z := h.Sum(nil)
 	address := fmt.Sprintf("0x%x", z)
-	das.vouchers[symbol] = voucher{
-		name: symbol,
-		symbol: symbol,
-		address: address,
+	das.vouchers[symbol] = Voucher{
+		Name: symbol,
+		Symbol: symbol,
+		Address: address,
 	}
 	das.vouchersAddress[address] = symbol
 	logg.InfoCtxf(ctx, "added dev voucher", "symbol", symbol, "address", address)
@@ -123,16 +123,16 @@ func (das *DevAccountService) CheckBalance(ctx context.Context, publicKey string
 	if !ok {
 		return nil, fmt.Errorf("account not found (publickey): %v", publicKey)
 	}
-	if acc.defaultVoucher == "" {
+	if acc.DefaultVoucher == "" {
 		return nil, fmt.Errorf("no default voucher set for: %v", publicKey)
 	}
-	bal, ok := acc.balances[acc.defaultVoucher]
+	bal, ok := acc.Balances[acc.DefaultVoucher]
 	if !ok {
-		return nil, fmt.Errorf("balance not found for default token %s pubkey %v", acc.defaultVoucher, publicKey)
+		return nil, fmt.Errorf("balance not found for default token %s pubkey %v", acc.DefaultVoucher, publicKey)
 	}
 	return &models.BalanceResult {
 		Balance: strconv.Itoa(bal),
-		Nonce: json.Number(strconv.Itoa(acc.nonce)),
+		Nonce: json.Number(strconv.Itoa(acc.Nonce)),
 	}, nil
 }
 
@@ -146,7 +146,7 @@ func (das *DevAccountService) balanceAuto(ctx context.Context, pubKey string) er
 		if !ok {
 			value = 0
 		}
-		_, err := das.TokenTransfer(ctx, strconv.Itoa(value), das.defaultAccount, pubKey, voucher.address)
+		_, err := das.TokenTransfer(ctx, strconv.Itoa(value), das.defaultAccount, pubKey, voucher.Address)
 		if err != nil {
 			return err
 		}
@@ -168,9 +168,9 @@ func (das *DevAccountService) CreateAccount(ctx context.Context) (*models.Accoun
 		return nil, fmt.Errorf("short read: %d", c)
 	}
 	pubKey := fmt.Sprintf("0x%x", b)
-	das.accounts[pubKey] = account{
-		track: uid.String(),
-		address: pubKey,
+	das.accounts[pubKey] = Account{
+		Track: uid.String(),
+		Address: pubKey,
 	}
 	das.accountsTrack[uid.String()] = pubKey
 	das.balanceAuto(ctx, pubKey)
@@ -201,15 +201,15 @@ func (das *DevAccountService) FetchVouchers(ctx context.Context, publicKey strin
 	if !ok {
 		return nil, fmt.Errorf("account not found (publickey): %v", publicKey)
 	}
-	for k, v := range(acc.balances) {
+	for k, v := range(acc.Balances) {
 		voucher, ok := das.vouchers[k]
 		if !ok {
 			return nil, fmt.Errorf("voucher has balance but object not found: %v", k)
 		}
 		holdings = append(holdings, dataserviceapi.TokenHoldings{
-			ContractAddress: voucher.address,
-			TokenSymbol: voucher.symbol,
-			TokenDecimals: strconv.Itoa(voucher.decimals),
+			ContractAddress: voucher.Address,
+			TokenSymbol: voucher.Symbol,
+			TokenDecimals: strconv.Itoa(voucher.Decimals),
 			Balance: strconv.Itoa(v),
 		})
 	}
@@ -222,24 +222,24 @@ func (das *DevAccountService) FetchTransactions(ctx context.Context, publicKey s
 	if !ok {
 		return nil, fmt.Errorf("account not found (publickey): %v", publicKey)
 	}
-	for i, v := range(acc.txs) {
+	for i, v := range(acc.Txs) {
 		mytx := das.txs[v]
 		if i == 10 {
 			break	
 		}
-		voucher, ok := das.vouchers[mytx.voucher]
+		voucher, ok := das.vouchers[mytx.Voucher]
 		if !ok {
-			return nil, fmt.Errorf("voucher %s in tx list but not found in voucher list", mytx.voucher)
+			return nil, fmt.Errorf("voucher %s in tx list but not found in voucher list", mytx.Voucher)
 		}
 		lasttx = append(lasttx, dataserviceapi.Last10TxResponse{
-			Sender: mytx.from,
-			Recipient: mytx.to,
-			TransferValue: strconv.Itoa(mytx.value),
-			ContractAddress: voucher.address,
-			TxHash: mytx.hsh,
-			DateBlock: mytx.when,
-			TokenSymbol: voucher.symbol,
-			TokenDecimals: strconv.Itoa(voucher.decimals),
+			Sender: mytx.From,
+			Recipient: mytx.To,
+			TransferValue: strconv.Itoa(mytx.Value),
+			ContractAddress: voucher.Address,
+			TxHash: mytx.Hsh,
+			DateBlock: mytx.When,
+			TokenSymbol: voucher.Symbol,
+			TokenDecimals: strconv.Itoa(voucher.Decimals),
 		})
 	}
 	return lasttx, nil
@@ -255,12 +255,12 @@ func (das *DevAccountService) VoucherData(ctx context.Context, address string) (
 		return nil, fmt.Errorf("voucher address %v found but does not resolve", address)
 	}
 	return &models.VoucherDataResult{
-		TokenName: voucher.name,
-		TokenSymbol: voucher.symbol,
-		TokenDecimals: voucher.decimals,
-		SinkAddress: voucher.sink,
-		TokenCommodity: voucher.commodity,
-		TokenLocation: voucher.location,
+		TokenName: voucher.Name,
+		TokenSymbol: voucher.Symbol,
+		TokenDecimals: voucher.Decimals,
+		SinkAddress: voucher.Sink,
+		TokenCommodity: voucher.Commodity,
+		TokenLocation: voucher.Location,
 
 	}, nil
 }
@@ -303,14 +303,14 @@ func (das *DevAccountService) TokenTransfer(ctx context.Context, amount, from, t
 		return nil, fmt.Errorf("tx hash short read: %d", c)
 	}
 	hsh := fmt.Sprintf("0x%x", b)
-	das.txs[hsh] = tx{
-		hsh: hsh,
-		to: accTo.address,
-		from: accFrom.address,
-		voucher: voucher.symbol,
-		value: value,
-		track: uid.String(),
-		when: time.Now(),
+	das.txs[hsh] = Tx{
+		Hsh: hsh,
+		To: accTo.Address,
+		From: accFrom.Address,
+		Voucher: voucher.Symbol,
+		Value: value,
+		Track: uid.String(),
+		When: time.Now(),
 	}
 	return &models.TokenTransferResponse{
 		TrackingId: uid.String(),
@@ -327,6 +327,6 @@ func (das *DevAccountService) CheckAliasAddress(ctx context.Context, alias strin
 		return nil, fmt.Errorf("alias %s found but does not resolve", alias)
 	}
 	return &dataserviceapi.AliasAddress{
-		Address: acc.address,
+		Address: acc.Address,
 	}, nil
 }
