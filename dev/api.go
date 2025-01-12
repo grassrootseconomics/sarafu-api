@@ -57,6 +57,7 @@ var (
 type DevAccountService struct {
 	accounts map[string]account
 	accountsTrack map[string]string
+	accountsAlias map[string]string
 	toAutoCreate bool
 //	accountsSession map[string]string
 }
@@ -65,7 +66,7 @@ func NewDevAccountService() *DevAccountService {
 	return &DevAccountService{
 		accounts: make(map[string]account),
 		accountsTrack: make(map[string]string),
-		//accountsSession: make(map[string]string),
+		accountsAlias: make(map[string]string),
 	}
 }
 
@@ -243,5 +244,19 @@ func (das *DevAccountService) TokenTransfer(ctx context.Context, amount, from, t
 	}
 	return &models.TokenTransferResponse{
 		TrackingId: uid.String(),
+	}, nil
+}
+
+func (das *DevAccountService) CheckAliasAddress(ctx context.Context, alias string) (*dataserviceapi.AliasAddress, error) {
+	addr, ok := das.accountsAlias[alias]
+	if !ok {
+		return nil, fmt.Errorf("alias %s not found", alias)
+	}
+	acc, ok := das.accounts[addr]
+	if !ok {
+		return nil, fmt.Errorf("alias %s found but does not resolve", alias)
+	}
+	return &dataserviceapi.AliasAddress{
+		Address: acc.address,
 	}, nil
 }
