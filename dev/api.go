@@ -16,6 +16,7 @@ import (
 const (
 	pubKeyLen int = 20
 	hashLen int = 32
+	defaultDecimals = 6
 )
 
 type tx struct {
@@ -47,17 +48,14 @@ type voucher struct {
 	location string
 }
 
-var (
-	vouchers = make(map[string]voucher)
-	vouchersAddress = make(map[string]string)
-	txs = make(map[string]tx)
-	txsTrack = make(map[string]string)
-)
-
 type DevAccountService struct {
 	accounts map[string]account
 	accountsTrack map[string]string
 	accountsAlias map[string]string
+	vouchers map[string]voucher
+	vouchersAddress map[string]string
+	txs map[string]tx
+	txsTrack map[string]string
 	toAutoCreate bool
 //	accountsSession map[string]string
 }
@@ -67,8 +65,27 @@ func NewDevAccountService() *DevAccountService {
 		accounts: make(map[string]account),
 		accountsTrack: make(map[string]string),
 		accountsAlias: make(map[string]string),
+		vouchers: make(map[string]voucher),
+		vouchersAddress: make(map[string]string),
+		txs: make(map[string]tx),
+		txsTrack: make(map[string]string),
 	}
 }
+
+func (das *DevAccountService) AddVoucher(v voucher) error {
+	if v.symbol == "" {
+		return fmt.Errorf("cannot add empty sym voucher")
+	}
+	v, ok := das.vouchers[v.symbol]
+	if ok {
+		return fmt.Errorf("already have voucher with symbol %s", v.symbol)
+	}
+	das.vouchers[v.symbol] = v
+	das.vouchersAddress[v.address] = v.symbol
+	return nil
+}
+
+// AccountService implementation below
 
 func (das *DevAccountService) CheckBalance(ctx context.Context, publicKey string) (*models.BalanceResult, error) {
 	acc, ok := das.accounts[publicKey]
@@ -132,7 +149,7 @@ func (das *DevAccountService) FetchVouchers(ctx context.Context, publicKey strin
 		return nil, fmt.Errorf("account not found (publickey): %v", publicKey)
 	}
 	for k, v := range(acc.balances) {
-		voucher, ok := vouchers[k]
+		voucher, ok := das.vouchers[k]
 		if !ok {
 			return nil, fmt.Errorf("voucher has balance but object not found: %v", k)
 		}
@@ -153,11 +170,11 @@ func (das *DevAccountService) FetchTransactions(ctx context.Context, publicKey s
 		return nil, fmt.Errorf("account not found (publickey): %v", publicKey)
 	}
 	for i, v := range(acc.txs) {
-		mytx := txs[v]
+		mytx := das.txs[v]
 		if i == 10 {
 			break	
 		}
-		voucher, ok := vouchers[mytx.voucher]
+		voucher, ok := das.vouchers[mytx.voucher]
 		if !ok {
 			return nil, fmt.Errorf("voucher %s in tx list but not found in voucher list", mytx.voucher)
 		}
@@ -176,11 +193,11 @@ func (das *DevAccountService) FetchTransactions(ctx context.Context, publicKey s
 }
 
 func (das *DevAccountService) VoucherData(ctx context.Context, address string) (*models.VoucherDataResult, error) {
-	sym, ok := vouchersAddress[address]
+	sym, ok := das.vouchersAddress[address]
 	if !ok {
 		return nil, fmt.Errorf("voucher address %v not found", address)
 	}
-	voucher, ok := vouchers[sym]
+	voucher, ok := das.vouchers[sym]
 	if !ok {
 		return nil, fmt.Errorf("voucher address %v found but does not resolve", address)
 	}
@@ -212,11 +229,11 @@ func (das *DevAccountService) TokenTransfer(ctx context.Context, amount, from, t
 		}
 	}
 
-	sym, ok := vouchersAddress[tokenAddress]
+	sym, ok := das.vouchersAddress[tokenAddress]
 	if !ok {
 		return nil, fmt.Errorf("voucher address %v not found", tokenAddress)
 	}
-	voucher, ok := vouchers[sym]
+	voucher, ok := das.vouchers[sym]
 	if !ok {
 		return nil, fmt.Errorf("voucher address %v found but does not resolve", tokenAddress)
 	}
@@ -233,7 +250,7 @@ func (das *DevAccountService) TokenTransfer(ctx context.Context, amount, from, t
 		return nil, fmt.Errorf("tx hash short read: %d", c)
 	}
 	hsh := fmt.Sprintf("0x%x", b)
-	txs[hsh] = tx{
+	das.txs[hsh] = tx{
 		hsh: hsh,
 		to: accTo.address,
 		from: accFrom.address,
