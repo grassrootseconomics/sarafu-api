@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"git.grassecon.net/grassrootseconomics/visedriver/config"
+	"git.grassecon.net/grassrootseconomics/sarafu-api/config"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
 	"github.com/grassrootseconomics/eth-custodial/pkg/api"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
