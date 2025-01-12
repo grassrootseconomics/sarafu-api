@@ -117,6 +117,18 @@ func (das *DevAccountService) loadAccount(ctx context.Context, pubKey string, v 
 	return nil
 }
 
+func (das *DevAccountService) loadTx(ctx context.Context, hsh string, v []byte) error {
+	var mytx Tx
+
+	err := json.Unmarshal(v, &mytx)
+	if err != nil {
+		return fmt.Errorf("malformed tx: %v", hsh)
+	}
+	das.txs[hsh] = mytx
+	das.txsTrack[mytx.Track] = hsh
+	return nil
+}
+
 func (das *DevAccountService) loadItem(ctx context.Context, k []byte, v []byte) error {
 	var err error
 	s := string(k)
@@ -126,6 +138,8 @@ func (das *DevAccountService) loadItem(ctx context.Context, k []byte, v []byte) 
 	}
 	if ss[0] == "account" {
 		err = das.loadAccount(ctx, ss[1], v)
+	} else if ss[0] == "tx" {
+		err = das.loadTx(ctx, ss[1], v)
 	}
 	return err
 }
@@ -352,6 +366,15 @@ func (das *DevAccountService) VoucherData(ctx context.Context, address string) (
 	}, nil
 }
 
+func (das *DevAccountService) saveTokenTransfer(ctx context.Context, mytx Tx) error {
+	k := "tx_" + mytx.Hsh
+	v, err := json.Marshal(mytx)
+	if err != nil {
+		return err
+	}
+	return das.db.Put(ctx, []byte(k), v)
+}
+
 func (das *DevAccountService) TokenTransfer(ctx context.Context, amount, from, to, tokenAddress string) (*models.TokenTransferResponse, error) {
 	var b [hashLen]byte
 	value, err := strconv.Atoi(amount)
@@ -390,7 +413,7 @@ func (das *DevAccountService) TokenTransfer(ctx context.Context, amount, from, t
 		return nil, fmt.Errorf("tx hash short read: %d", c)
 	}
 	hsh := fmt.Sprintf("0x%x", b)
-	das.txs[hsh] = Tx{
+	mytx := Tx{
 		Hsh: hsh,
 		To: accTo.Address,
 		From: accFrom.Address,
@@ -399,6 +422,12 @@ func (das *DevAccountService) TokenTransfer(ctx context.Context, amount, from, t
 		Track: uid.String(),
 		When: time.Now(),
 	}
+	err = das.saveTokenTransfer(ctx, mytx)
+	if err != nil {
+		return nil, err
+	}
+
+	das.txs[hsh] = mytx
 	return &models.TokenTransferResponse{
 		TrackingId: uid.String(),
 	}, nil
