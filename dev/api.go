@@ -27,7 +27,7 @@ const (
 	pubKeyLen int = 20
 	hashLen int = 32
 	defaultDecimals = 6
-	zeroAccount string = "0x0000000000000000000000000000000000000000"
+	zeroAddress string = "0x0000000000000000000000000000000000000000"
 )
 
 type Tx struct {
@@ -89,7 +89,12 @@ func NewDevAccountService(ctx context.Context, d string) *DevAccountService {
 		txs: make(map[string]Tx),
 		txsTrack: make(map[string]string),
 		autoVoucherValue: make(map[string]int),
+		defaultAccount: zeroAddress,
 	}
+	acc := Account{
+		Address: zeroAddress,
+	}
+	svc.accounts[acc.Address] = acc
 	err := svc.db.Connect(ctx, d)
 	if err != nil {
 		panic(err)
@@ -272,9 +277,12 @@ func (das *DevAccountService) CreateAccount(ctx context.Context) (*models.Accoun
 
 	das.accounts[pubKey] = acc
 	das.accountsTrack[uid.String()] = pubKey
-	das.balanceAuto(ctx, pubKey)
+	err = das.balanceAuto(ctx, pubKey)
+	if err != nil {
+		return nil, err
+	}
 
-	if das.defaultAccount == zeroAccount {
+	if das.defaultAccount == zeroAddress {
 		das.defaultAccount = pubKey
 	}
 
@@ -386,7 +394,7 @@ func (das *DevAccountService) TokenTransfer(ctx context.Context, amount, from, t
 	if !ok {
 		return nil, fmt.Errorf("sender account %v not found", from)	
 	}
-	accTo, ok := das.accounts[from]
+	accTo, ok := das.accounts[to]
 	if !ok {
 		if !das.toAutoCreate {
 			return nil, fmt.Errorf("recipient account %v not found, and not creating", from)	
