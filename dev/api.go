@@ -149,6 +149,8 @@ func (das *DevAccountService) loadItem(ctx context.Context, k []byte, v []byte) 
 	return err
 }
 
+// TODO: Add connect tx and account
+// TODO: update balance
 func (das *DevAccountService) loadAll(ctx context.Context) error {
 	d, err := os.ReadDir(das.dir)
 	if err != nil {
@@ -182,6 +184,7 @@ func (das *DevAccountService) WithAutoVoucher(ctx context.Context, symbol string
 }
 
 // TODO: add persistence for vouchers
+// TODO: set max balance for 0x00 address
 func (das *DevAccountService) AddVoucher(ctx context.Context, symbol string) error {
 	if symbol == "" {
 		return fmt.Errorf("cannot add empty sym voucher")
@@ -384,6 +387,8 @@ func (das *DevAccountService) saveTokenTransfer(ctx context.Context, mytx Tx) er
 	return das.db.Put(ctx, []byte(k), v)
 }
 
+// TODO: set default voucher on first received
+// TODO: update balance
 func (das *DevAccountService) TokenTransfer(ctx context.Context, amount, from, to, tokenAddress string) (*models.TokenTransferResponse, error) {
 	var b [hashLen]byte
 	value, err := strconv.Atoi(amount)
