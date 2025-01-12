@@ -2,6 +2,8 @@ git.defalsify.org/vise.git v0.2.3-0.20250103172917-3e190a44568d h1:bPAOVZOX4frSG
 git.defalsify.org/vise.git v0.2.3-0.20250103172917-3e190a44568d/go.mod h1:jyBMe1qTYUz3mmuoC9JQ/TvFeW0vTanCUcPu3H8p4Ck=
 git.grassecon.net/grassrootseconomics/visedriver v0.8.0-beta.10.0.20250112121325-9e4c65c8b4d1 h1:RfU5/WFfPxDptlkyx4MT+4YmO79sY6HvIngUq5uwQPU=
 git.grassecon.net/grassrootseconomics/visedriver v0.8.0-beta.10.0.20250112121325-9e4c65c8b4d1/go.mod h1:E6W7ZOa7ZvVr0Bc5ot0LNSwpSPYq4hXlAIvEPy3AJ7U=
+github.com/barbashov/iso639-3 v0.0.0-20211020172741-1f4ffb2d8d1c h1:H9Nm+I7Cg/YVPpEV1RzU3Wq2pjamPc/UtHDgItcb7lE=
+github.com/barbashov/iso639-3 v0.0.0-20211020172741-1f4ffb2d8d1c/go.mod h1:rGod7o6KPeJ+hyBpHfhi4v7blx9sf+QsHsA7KAsdN6U=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/gofrs/uuid v4.4.0+incompatible h1:3qXRTX8/NbyulANqlc0lchS1gqAVxRgsuW1YrTJupqA=

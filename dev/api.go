@@ -6,11 +6,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofrs/uuid"
 	"git.defalsify.org/vise.git/logging"
+	"git.defalsify.org/vise.git/db"
+	fsdb "git.defalsify.org/vise.git/db/fs"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
@@ -42,6 +46,7 @@ type Account struct {
 	Nonce int `json: "nonce"`
 	DefaultVoucher string `json: "defaultVoucher"`
 	Balances map[string]int `json: "balances"` 
+	Alias string
 	Txs []string `json: "txs"`
 }
 
@@ -56,6 +61,8 @@ type Voucher struct {
 }
 
 type DevAccountService struct {
+	dir string
+	db db.Db
 	accounts map[string]Account
 	accountsTrack map[string]string
 	accountsAlias map[string]string
@@ -70,8 +77,10 @@ type DevAccountService struct {
 //	accountsSession map[string]string
 }
 
-func NewDevAccountService() *DevAccountService {
-	return &DevAccountService{
+func NewDevAccountService(ctx context.Context, d string) *DevAccountService {
+	svc := &DevAccountService{
+		dir: d,
+		db: fsdb.NewFsDb(),
 		accounts: make(map[string]Account),
 		accountsTrack: make(map[string]string),
 		accountsAlias: make(map[string]string),
@@ -81,6 +90,65 @@ func NewDevAccountService() *DevAccountService {
 		txsTrack: make(map[string]string),
 		autoVoucherValue: make(map[string]int),
 	}
+	err := svc.db.Connect(ctx, d)
+	if err != nil {
+		panic(err)
+	}
+	svc.db.SetPrefix(db.DATATYPE_USERDATA)
+	err = svc.loadAll(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return svc
+}
+
+func (das *DevAccountService) loadAccount(ctx context.Context, pubKey string, v []byte) error {
+	var acc Account
+
+	err := json.Unmarshal(v, &acc)
+	if err != nil {
+		return fmt.Errorf("malformed account: %v", pubKey)
+	}
+	das.accounts[pubKey] = acc
+	das.accountsTrack[acc.Track] = pubKey
+	if acc.Alias != "" {
+		das.accountsAlias[acc.Alias] = pubKey
+	}
+	return nil
+}
+
+func (das *DevAccountService) loadItem(ctx context.Context, k []byte, v []byte) error {
+	var err error
+	s := string(k)
+	ss := strings.SplitN(s, "_", 2)
+	if len(ss) != 2 {
+		return fmt.Errorf("malformed key: %s", s)
+	}
+	if ss[0] == "account" {
+		err = das.loadAccount(ctx, ss[1], v)
+	}
+	return err
+}
+
+func (das *DevAccountService) loadAll(ctx context.Context) error {
+	d, err := os.ReadDir(das.dir)
+	if err != nil {
+		return err
+	}
+	for _, v := range(d) {
+		// TODO: move decoding to vise
+		fp := v.Name()
+		k := []byte(fp[1:])
+		v, err := das.db.Get(ctx, k)
+		if err != nil {
+			return err
+		}
+		err = das.loadItem(ctx, k, v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (das *DevAccountService) WithAutoVoucher(ctx context.Context, symbol string, value int) *DevAccountService {
@@ -94,6 +162,7 @@ func (das *DevAccountService) WithAutoVoucher(ctx context.Context, symbol string
 	return das
 }
 
+// TODO: add persistence for vouchers
 func (das *DevAccountService) AddVoucher(ctx context.Context, symbol string) error {
 	if symbol == "" {
 		return fmt.Errorf("cannot add empty sym voucher")
@@ -154,6 +223,15 @@ func (das *DevAccountService) balanceAuto(ctx context.Context, pubKey string) er
 	return nil
 }
 
+func (das *DevAccountService) saveAccount(ctx context.Context, acc Account) error {
+	k := "account_" + acc.Address
+	v, err := json.Marshal(acc)
+	if err != nil {
+		return err
+	}
+	return das.db.Put(ctx, []byte(k), v)
+}
+
 func (das *DevAccountService) CreateAccount(ctx context.Context) (*models.AccountResult, error) {
 	var b [pubKeyLen]byte
 	uid, err := uuid.NewV4()
@@ -168,16 +246,25 @@ func (das *DevAccountService) CreateAccount(ctx context.Context) (*models.Accoun
 		return nil, fmt.Errorf("short read: %d", c)
 	}
 	pubKey := fmt.Sprintf("0x%x", b)
-	das.accounts[pubKey] = Account{
+	acc := Account{
 		Track: uid.String(),
 		Address: pubKey,
 	}
+
+	err = das.saveAccount(ctx, acc)
+	if err != nil {
+		return nil, err
+	}
+
+	das.accounts[pubKey] = acc
 	das.accountsTrack[uid.String()] = pubKey
 	das.balanceAuto(ctx, pubKey)
 
 	if das.defaultAccount == zeroAccount {
 		das.defaultAccount = pubKey
 	}
+
+
 	return &models.AccountResult{
 		PublicKey: pubKey,
 		TrackingId: uid.String(),
