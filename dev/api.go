@@ -2,6 +2,7 @@ package dev
 
 import (
 	"context"
+	"crypto/sha1"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -82,27 +83,36 @@ func NewDevAccountService() *DevAccountService {
 	}
 }
 
-func (das *DevAccountService) WithAutoVoucher(ctx context.Context, v voucher, value int) *DevAccountService {
-	err := das.AddVoucher(v)
+func (das *DevAccountService) WithAutoVoucher(ctx context.Context, symbol string, value int) *DevAccountService {
+	err := das.AddVoucher(ctx, symbol)
 	if err != nil {
-		logg.ErrorCtxf(ctx, "cannot add autovoucher %s: %v", v, err)
+		logg.ErrorCtxf(ctx, "cannot add autovoucher %s: %v", symbol, err)
 		return das
 	}
-	das.autoVouchers = append(das.autoVouchers, v.symbol)
-	das.autoVoucherValue[v.symbol] = value
+	das.autoVouchers = append(das.autoVouchers, symbol)
+	das.autoVoucherValue[symbol] = value
 	return das
 }
 
-func (das *DevAccountService) AddVoucher(v voucher) error {
-	if v.symbol == "" {
+func (das *DevAccountService) AddVoucher(ctx context.Context, symbol string) error {
+	if symbol == "" {
 		return fmt.Errorf("cannot add empty sym voucher")
 	}
-	v, ok := das.vouchers[v.symbol]
+	v, ok := das.vouchers[symbol]
 	if ok {
 		return fmt.Errorf("already have voucher with symbol %s", v.symbol)
 	}
-	das.vouchers[v.symbol] = v
-	das.vouchersAddress[v.address] = v.symbol
+	h := sha1.New()
+	h.Write([]byte(symbol))
+	z := h.Sum(nil)
+	address := fmt.Sprintf("0x%x", z)
+	das.vouchers[symbol] = voucher{
+		name: symbol,
+		symbol: symbol,
+		address: address,
+	}
+	das.vouchersAddress[address] = symbol
+	logg.InfoCtxf(ctx, "added dev voucher", "symbol", symbol, "address", address)
 	return nil
 }
 
