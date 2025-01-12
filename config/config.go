@@ -3,7 +3,7 @@ package config
 import (
 	"net/url"
 
-	"git.grassecon.net/grassrootseconomics/common/env"
+	"git.grassecon.net/grassrootseconomics/visedriver/env"
 )
 
 const (
