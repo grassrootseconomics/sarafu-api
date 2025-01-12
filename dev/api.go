@@ -278,6 +278,7 @@ func (das *DevAccountService) CreateAccount(ctx context.Context) (*models.Accoun
 		das.defaultAccount = pubKey
 	}
 
+	logg.InfoCtxf(ctx, "account created", "account", acc)
 
 	return &models.AccountResult{
 		PublicKey: pubKey,
@@ -426,8 +427,8 @@ func (das *DevAccountService) TokenTransfer(ctx context.Context, amount, from, t
 	if err != nil {
 		return nil, err
 	}
-
 	das.txs[hsh] = mytx
+	logg.InfoCtxf(ctx, "token transfer created", "tx", mytx)
 	return &models.TokenTransferResponse{
 		TrackingId: uid.String(),
 	}, nil
