@@ -36,6 +36,11 @@ var (
 	CheckAliasURL       string
 )
 
+const (
+	defaultHTTPHost string = "127.0.0.1"
+	defaultHTTPPort uint = 7123
+)
+
 func setBase() error {
 	var err error
 
@@ -70,4 +75,12 @@ func LoadConfig() error {
 	VoucherDataURL, _ = url.JoinPath(dataURLBase, voucherDataPathPrefix)
 	CheckAliasURL, _ = url.JoinPath(dataURLBase, AliasPrefix)
 	return nil
+}
+
+func Host() string {
+	return env.GetEnv("HOST", defaultHTTPHost)
+}
+
+func Port() uint {
+	return env.GetEnvUint("PORT", defaultHTTPPort)
 }
