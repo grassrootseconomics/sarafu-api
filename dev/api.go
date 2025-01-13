@@ -16,6 +16,7 @@ import (
 	"git.defalsify.org/vise.git/db"
 	fsdb "git.defalsify.org/vise.git/db/fs"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
+	"git.grassecon.net/grassrootseconomics/sarafu-api/event"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
 
@@ -74,6 +75,7 @@ type DevAccountService struct {
 	autoVouchers []string
 	autoVoucherValue map[string]int
 	defaultAccount string
+	emitterFunc event.EmitterFunc
 //	accountsSession map[string]string
 }
 
@@ -105,6 +107,11 @@ func NewDevAccountService(ctx context.Context, d string) *DevAccountService {
 		panic(err)
 	}
 	return svc
+}
+
+func (das *DevAccountService) WithEmitter(fn event.EmitterFunc) *DevAccountService {
+	das.emitterFunc = fn
+	return das
 }
 
 func (das *DevAccountService) loadAccount(ctx context.Context, pubKey string, v []byte) error {
@@ -306,7 +313,17 @@ func (das *DevAccountService) CreateAccount(ctx context.Context) (*models.Accoun
 		das.defaultAccount = pubKey
 	}
 
-	logg.InfoCtxf(ctx, "account created", "account", acc)
+	if das.emitterFunc != nil {
+		msg := event.Msg{
+			Typ: event.EventRegistrationTag,
+			Item: acc,
+		}
+		err = das.emitterFunc(ctx, msg)
+		if err != nil {
+			logg.ErrorCtxf(ctx, "emitter returned error", "err", err, "msg", msg)
+		}
+	}
+	logg.TraceCtxf(ctx, "account created", "account", acc)
 
 	return &models.AccountResult{
 		PublicKey: pubKey,
@@ -458,7 +475,17 @@ func (das *DevAccountService) TokenTransfer(ctx context.Context, amount, from, t
 		return nil, err
 	}
 	das.txs[hsh] = mytx
-	logg.InfoCtxf(ctx, "token transfer created", "tx", mytx)
+	if das.emitterFunc != nil {
+		msg := event.Msg{
+			Typ: event.EventTokenTransferTag,
+			Item: mytx,
+		}
+		err = das.emitterFunc(ctx, msg)
+		if err != nil {
+			logg.ErrorCtxf(ctx, "emitter returned error", "err", err, "msg", msg)
+		}
+	}
+	logg.TraceCtxf(ctx, "token transfer created", "tx", mytx)
 	return &models.TokenTransferResponse{
 		TrackingId: uid.String(),
 	}, nil
