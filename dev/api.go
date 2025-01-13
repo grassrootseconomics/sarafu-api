@@ -119,6 +119,7 @@ func (das *DevAccountService) loadAccount(ctx context.Context, pubKey string, v 
 	if acc.Alias != "" {
 		das.accountsAlias[acc.Alias] = pubKey
 	}
+	logg.TraceCtxf(ctx, "add account", "address", acc.Address)
 	return nil
 }
 
@@ -131,6 +132,7 @@ func (das *DevAccountService) loadTx(ctx context.Context, hsh string, v []byte) 
 	}
 	das.txs[hsh] = mytx
 	das.txsTrack[mytx.Track] = hsh
+	logg.TraceCtxf(ctx, "add tx", "hash", hsh)
 	return nil
 }
 
@@ -168,6 +170,21 @@ func (das *DevAccountService) loadAll(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+	}
+	return das.indexAll(ctx)
+}
+
+func (das *DevAccountService) indexAll(ctx context.Context) error {
+	for k, v := range(das.txs) {
+		acc := das.accounts[v.From]
+		acc.Txs = append(acc.Txs, k)
+		logg.TraceCtxf(ctx, "add tx to sender index", "from", v.From, "tx", k)
+		if v.From == v.To {
+			continue
+		}
+		acc = das.accounts[v.To]
+		acc.Txs = append(acc.Txs, k)
+		logg.TraceCtxf(ctx, "add tx to recipient index", "from", v.To, "tx", k)
 	}
 	return nil
 }
