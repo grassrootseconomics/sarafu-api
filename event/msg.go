@@ -8,6 +8,7 @@ import (
 const (
 	// TODO: integrate with sarafu-vise-events
 	EventTokenTransferTag = "TOKEN_TRANSFER"
+	EventTokenMintTag = "TOKEN_MINT"
 	EventRegistrationTag = "CUSTODIAL_REGISTRATION"
 )
 
@@ -59,7 +60,7 @@ func (eh *EventsHandler) WithHandler(tag string, fn EventsHandlerFunc) *EventsHa
 func (eh *EventsHandler) Handle(ctx context.Context, tag string, o any) error {
 	fn, ok := eh.handlers[tag]
 	if !ok {
-		fmt.Errorf("Handler not registered for tag: %s", tag)
+		return fmt.Errorf("Handler not registered for tag: %s", tag)
 	}
 	return fn(ctx, o)
 }
