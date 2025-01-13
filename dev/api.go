@@ -41,6 +41,25 @@ type Tx struct {
 	When time.Time `json: "when"`
 }
 
+func (t *Tx) ToTransferEvent() event.EventTokenTransfer {
+	return event.EventTokenTransfer{
+		To: t.To,
+		Value: t.Value,
+		VoucherAddress: t.Voucher,
+		TxHash: t.Hsh,
+		From: t.From,
+	}
+}
+
+func (t *Tx) ToMintEvent() event.EventTokenMint {
+	return event.EventTokenMint{
+		To: t.To,
+		Value: t.Value,
+		VoucherAddress: t.Voucher,
+		TxHash: t.Hsh,
+	}
+}
+
 type Account struct {
 	Track string `json: "track"`
 	Address string `json: "address"`
@@ -49,6 +68,12 @@ type Account struct {
 	Balances map[string]int `json: "balances"` 
 	Alias string
 	Txs []string `json: "txs"`
+}
+
+func (a *Account) ToRegistrationEvent() event.EventCustodialRegistration {
+	return event.EventCustodialRegistration{
+		Account: a.Address,
+	}
 }
 
 type Voucher struct {
