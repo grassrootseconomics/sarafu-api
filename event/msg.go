@@ -2,6 +2,7 @@ package event
 
 import (
 	"context"
+	"fmt"
 )
 
 const (
@@ -36,4 +37,29 @@ type EventTokenMint struct {
 	Value int
 	TxHash string
 	VoucherAddress string
+}
+
+type EventsHandlerFunc func(context.Context, any) error
+
+type EventsHandler struct {
+	handlers map[string]EventsHandlerFunc
+}
+
+func NewEventsHandler() *EventsHandler {
+	return &EventsHandler{
+		handlers: make(map[string]EventsHandlerFunc),
+	}
+}
+
+func (eh *EventsHandler) WithHandler(tag string, fn EventsHandlerFunc) *EventsHandler {
+	eh.handlers[tag] = fn
+	return eh
+}
+
+func (eh *EventsHandler) Handle(ctx context.Context, tag string, o any) error {
+	fn, ok := eh.handlers[tag]
+	if !ok {
+		fmt.Errorf("Handler not registered for tag: %s", tag)
+	}
+	return fn(ctx, o)
 }
