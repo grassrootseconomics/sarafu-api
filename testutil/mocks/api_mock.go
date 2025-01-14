@@ -50,7 +50,7 @@ func(m MockApi) VoucherData(ctx context.Context, address string) (*models.Vouche
 	return m.VoucherDataContent, nil
 }
 
-func(m MockApi) CheckAliasAddress(ctx context.Context, alias string) (*dataserviceapi.AliasAddress, error) {
+func(m MockApi) CheckAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error) {
 	return nil, nil
 }
 

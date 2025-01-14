@@ -57,6 +57,10 @@ func (tas *TestAccountService) TokenTransfer(ctx context.Context, amount, from, 
 	}, nil
 }
 
-func (m TestAccountService) CheckAliasAddress(ctx context.Context, alias string) (*dataserviceapi.AliasAddress, error) {
-	return &dataserviceapi.AliasAddress{}, nil
+func (m TestAccountService) CheckAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error) {
+	return &models.AliasAddress{}, nil
+}
+
+func (m TestAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
+	return &models.RequestAliasResult{}, nil
 }
