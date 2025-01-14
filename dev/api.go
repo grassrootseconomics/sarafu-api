@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -17,11 +18,13 @@ import (
 	fsdb "git.defalsify.org/vise.git/db/fs"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/event"
+	"git.grassecon.net/grassrootseconomics/common/phone"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
 
 var (
 	logg = logging.NewVanilla().WithDomain("sarafu-api.devapi")
+	aliasRegex = regexp.MustCompile("^\\+?[a-zA-Z0-9\\-_]+$")
 )
 
 const (
@@ -104,10 +107,8 @@ type DevAccountService struct {
 //	accountsSession map[string]string
 }
 
-func NewDevAccountService(ctx context.Context, d string) *DevAccountService {
+func NewDevAccountService() *DevAccountService {
 	svc := &DevAccountService{
-		dir: d,
-		db: fsdb.NewFsDb(),
 		accounts: make(map[string]Account),
 		accountsTrack: make(map[string]string),
 		accountsAlias: make(map[string]string),
@@ -122,16 +123,25 @@ func NewDevAccountService(ctx context.Context, d string) *DevAccountService {
 		Address: zeroAddress,
 	}
 	svc.accounts[acc.Address] = acc
-	err := svc.db.Connect(ctx, d)
-	if err != nil {
-		panic(err)
-	}
-	svc.db.SetPrefix(db.DATATYPE_USERDATA)
-	err = svc.loadAll(ctx)
-	if err != nil {
-		panic(err)
-	}
 	return svc
+}
+
+func (das *DevAccountService) WithFs(ctx context.Context, dir string) *DevAccountService {
+	if das.db != nil {
+		return das
+	}
+	das.dir = dir
+	das.db = fsdb.NewFsDb()
+	err := das.db.Connect(ctx, dir)
+	if err != nil {
+		panic(err)
+	}
+	das.db.SetPrefix(db.DATATYPE_USERDATA)
+	err = das.loadAll(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return das
 }
 
 func (das *DevAccountService) WithEmitter(fn event.EmitterFunc) *DevAccountService {
@@ -295,6 +305,9 @@ func (das *DevAccountService) balanceAuto(ctx context.Context, pubKey string) er
 }
 
 func (das *DevAccountService) saveAccount(ctx context.Context, acc Account) error {
+	if das.db == nil {
+		return nil
+	}
 	k := "account_" + acc.Address
 	v, err := json.Marshal(acc)
 	if err != nil {
@@ -516,7 +529,7 @@ func (das *DevAccountService) TokenTransfer(ctx context.Context, amount, from, t
 	}, nil
 }
 
-func (das *DevAccountService) CheckAliasAddress(ctx context.Context, alias string) (*dataserviceapi.AliasAddress, error) {
+func (das *DevAccountService) CheckAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error) {
 	addr, ok := das.accountsAlias[alias]
 	if !ok {
 		return nil, fmt.Errorf("alias %s not found", alias)
@@ -525,7 +538,52 @@ func (das *DevAccountService) CheckAliasAddress(ctx context.Context, alias strin
 	if !ok {
 		return nil, fmt.Errorf("alias %s found but does not resolve", alias)
 	}
-	return &dataserviceapi.AliasAddress{
+	return &models.AliasAddress{
 		Address: acc.Address,
+	}, nil
+}
+
+func (das *DevAccountService) applyPhoneAlias(ctx context.Context, publicKey string, phoneNumber string) (bool, error) {
+	if phoneNumber[0] == '+' {
+		if !phone.IsValidPhoneNumber(phoneNumber) {
+			return false, fmt.Errorf("Invalid phoneNumber number: %v", phoneNumber)
+		}
+		logg.DebugCtxf(ctx, "matched phoneNumber alias", "phoneNumber", phoneNumber, "address", publicKey)
+		return true, nil
+	}
+	return false, nil
+}
+
+func (das *DevAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
+	var alias string
+	if !aliasRegex.MatchString(hint) {
+		return nil, fmt.Errorf("alias hint does not match: %s", publicKey)
+	}
+	acc, ok := das.accounts[publicKey]
+	if !ok {
+		return nil, fmt.Errorf("address %s not found", publicKey)
+	}
+	alias = hint
+	isPhone, err := das.applyPhoneAlias(ctx, publicKey, alias)
+	if err != nil {
+		return nil, fmt.Errorf("phone parser error: %v", err)
+	}
+	if !isPhone {
+		for true {
+			addr, ok := das.accountsAlias[alias]
+			if !ok {
+				break
+			}
+			if addr == publicKey {
+				break
+			}
+			alias += "x"
+		}
+		acc.Alias = alias
+		das.accountsAlias[alias] = publicKey
+	}
+	logg.DebugCtxf(ctx, "set alias", "addr", publicKey, "alias", alias)
+	return &models.RequestAliasResult{
+		Alias: alias,
 	}, nil
 }

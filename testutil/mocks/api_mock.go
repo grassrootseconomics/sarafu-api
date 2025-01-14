@@ -54,6 +54,12 @@ func(m MockApi) CheckAliasAddress(ctx context.Context, alias string) (*dataservi
 	return nil, nil
 }
 
+func(m MockApi) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
+	return nil, nil
+}
+
 func(m MockApi) TokenTransfer(ctx context.Context, amount, from, to, tokenAddress string) (*models.TokenTransferResponse, error) {
 	return nil, nil
 }
+
+
