@@ -3,11 +3,14 @@ package dev
 import (
 	"context"
 	"testing"
+
+	"git.grassecon.net/grassrootseconomics/visedriver/testutil/mocks"
 )
 
 func TestApiRequestAlias(t *testing.T) {
 	ctx := context.Background()
-	svc := NewDevAccountService()
+	storageService := mocks.NewMemStorageService(ctx)
+	svc := NewDevAccountService(ctx, storageService)
 	ra, err := svc.CreateAccount(ctx)
 	if err != nil {
 		t.Fatal(err)

@@ -1,12 +1,12 @@
 package dev
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -15,10 +15,10 @@ import (
 	"github.com/gofrs/uuid"
 	"git.defalsify.org/vise.git/logging"
 	"git.defalsify.org/vise.git/db"
-	fsdb "git.defalsify.org/vise.git/db/fs"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/event"
 	"git.grassecon.net/grassrootseconomics/common/phone"
+	"git.grassecon.net/grassrootseconomics/visedriver/storage"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
 
@@ -90,7 +90,6 @@ type Voucher struct {
 }
 
 type DevAccountService struct {
-	dir string
 	db db.Db
 	accounts map[string]Account
 	accountsTrack map[string]string
@@ -107,7 +106,7 @@ type DevAccountService struct {
 //	accountsSession map[string]string
 }
 
-func NewDevAccountService() *DevAccountService {
+func NewDevAccountService(ctx context.Context, ss storage.StorageService) *DevAccountService {
 	svc := &DevAccountService{
 		accounts: make(map[string]Account),
 		accountsTrack: make(map[string]string),
@@ -119,29 +118,24 @@ func NewDevAccountService() *DevAccountService {
 		autoVoucherValue: make(map[string]int),
 		defaultAccount: zeroAddress,
 	}
+	if ss != nil {
+		var err error
+		svc.db, err = ss.GetUserdataDb(ctx)
+		if err != nil {
+			panic(err)
+		}
+		svc.db.SetSession("")
+		svc.db.SetPrefix(db.DATATYPE_USERDATA)
+		err = svc.loadAll(ctx)
+		if err != nil {
+			logg.DebugCtxf(ctx, "loadall error", "err", err)
+		}
+	}
 	acc := Account{
 		Address: zeroAddress,
 	}
 	svc.accounts[acc.Address] = acc
 	return svc
-}
-
-func (das *DevAccountService) WithFs(ctx context.Context, dir string) *DevAccountService {
-	if das.db != nil {
-		return das
-	}
-	das.dir = dir
-	das.db = fsdb.NewFsDb()
-	err := das.db.Connect(ctx, dir)
-	if err != nil {
-		panic(err)
-	}
-	das.db.SetPrefix(db.DATATYPE_USERDATA)
-	err = das.loadAll(ctx)
-	if err != nil {
-		panic(err)
-	}
-	return das
 }
 
 func (das *DevAccountService) WithEmitter(fn event.EmitterFunc) *DevAccountService {
@@ -181,7 +175,7 @@ func (das *DevAccountService) loadTx(ctx context.Context, hsh string, v []byte) 
 func (das *DevAccountService) loadItem(ctx context.Context, k []byte, v []byte) error {
 	var err error
 	s := string(k)
-	ss := strings.SplitN(s, "_", 2)
+	ss := strings.SplitN(s[2:], "_", 2)
 	if len(ss) != 2 {
 		return fmt.Errorf("malformed key: %s", s)
 	}
@@ -189,6 +183,8 @@ func (das *DevAccountService) loadItem(ctx context.Context, k []byte, v []byte) 
 		err = das.loadAccount(ctx, ss[1], v)
 	} else if ss[0] == "tx" {
 		err = das.loadTx(ctx, ss[1], v)
+	} else {
+		logg.ErrorCtxf(ctx, "unknown double underscore key", "key", ss[0])
 	}
 	return err
 }
@@ -196,18 +192,19 @@ func (das *DevAccountService) loadItem(ctx context.Context, k []byte, v []byte) 
 // TODO: Add connect tx and account
 // TODO: update balance
 func (das *DevAccountService) loadAll(ctx context.Context) error {
-	d, err := os.ReadDir(das.dir)
+	dumper, err := das.db.Dump(ctx, []byte{})
 	if err != nil {
 		return err
 	}
-	for _, v := range(d) {
-		// TODO: move decoding to vise
-		fp := v.Name()
-		k := []byte(fp[1:])
-		v, err := das.db.Get(ctx, k)
-		if err != nil {
-			return err
+	for true {
+		k, v := dumper.Next(ctx)
+		if k == nil {
+			break
 		}
+		if !bytes.HasPrefix(k, []byte("__")) {
+			continue
+		}
+
 		err = das.loadItem(ctx, k, v)
 		if err != nil {
 			return err
@@ -308,11 +305,13 @@ func (das *DevAccountService) saveAccount(ctx context.Context, acc Account) erro
 	if das.db == nil {
 		return nil
 	}
-	k := "account_" + acc.Address
+	k := "__account_" + acc.Address
 	v, err := json.Marshal(acc)
 	if err != nil {
 		return err
 	}
+	das.db.SetSession("")
+	das.db.SetPrefix(db.DATATYPE_USERDATA)
 	return das.db.Put(ctx, []byte(k), v)
 }
 
@@ -451,11 +450,13 @@ func (das *DevAccountService) VoucherData(ctx context.Context, address string) (
 }
 
 func (das *DevAccountService) saveTokenTransfer(ctx context.Context, mytx Tx) error {
-	k := "tx_" + mytx.Hsh
+	k := "__tx_" + mytx.Hsh
 	v, err := json.Marshal(mytx)
 	if err != nil {
 		return err
 	}
+	das.db.SetSession("")
+	das.db.SetPrefix(db.DATATYPE_USERDATA)
 	return das.db.Put(ctx, []byte(k), v)
 }
 
