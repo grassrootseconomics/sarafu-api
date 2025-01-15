@@ -103,6 +103,7 @@ type DevAccountService struct {
 	autoVoucherValue map[string]int
 	defaultAccount string
 	emitterFunc event.EmitterFunc
+	pfx []byte
 //	accountsSession map[string]string
 }
 
@@ -117,6 +118,7 @@ func NewDevAccountService(ctx context.Context, ss storage.StorageService) *DevAc
 		txsTrack: make(map[string]string),
 		autoVoucherValue: make(map[string]int),
 		defaultAccount: zeroAddress,
+		pfx: []byte("__"),
 	}
 	if ss != nil {
 		var err error
@@ -141,6 +143,15 @@ func NewDevAccountService(ctx context.Context, ss storage.StorageService) *DevAc
 func (das *DevAccountService) WithEmitter(fn event.EmitterFunc) *DevAccountService {
 	das.emitterFunc = fn
 	return das
+}
+
+func (das *DevAccountService) WithPrefix(pfx []byte) *DevAccountService {
+	das.pfx = pfx
+	return das
+}
+
+func (das *DevAccountService) prefixKeyFor(k string, v string) []byte {
+	return append(das.pfx, []byte(k + "_" + v)...)
 }
 
 func (das *DevAccountService) loadAccount(ctx context.Context, pubKey string, v []byte) error {
@@ -201,7 +212,7 @@ func (das *DevAccountService) loadAll(ctx context.Context) error {
 		if k == nil {
 			break
 		}
-		if !bytes.HasPrefix(k, []byte("__")) {
+		if !bytes.HasPrefix(k, das.pfx) {
 			continue
 		}
 
@@ -305,7 +316,7 @@ func (das *DevAccountService) saveAccount(ctx context.Context, acc Account) erro
 	if das.db == nil {
 		return nil
 	}
-	k := "__account_" + acc.Address
+	k := das.prefixKeyFor("account", acc.Address)
 	v, err := json.Marshal(acc)
 	if err != nil {
 		return err
@@ -450,7 +461,7 @@ func (das *DevAccountService) VoucherData(ctx context.Context, address string) (
 }
 
 func (das *DevAccountService) saveTokenTransfer(ctx context.Context, mytx Tx) error {
-	k := "__tx_" + mytx.Hsh
+	k := das.prefixKeyFor("tx", mytx.Hsh)
 	v, err := json.Marshal(mytx)
 	if err != nil {
 		return err
