@@ -15,5 +15,6 @@ type AccountService interface {
 	FetchTransactions(ctx context.Context, publicKey string) ([]dataserviceapi.Last10TxResponse, error)
 	VoucherData(ctx context.Context, address string) (*models.VoucherDataResult, error)
 	TokenTransfer(ctx context.Context, amount, from, to, tokenAddress string) (*models.TokenTransferResponse, error)
-	CheckAliasAddress(ctx context.Context, alias string) (*dataserviceapi.AliasAddress, error)
+	CheckAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error)
+	RequestAlias(ctx context.Context, hint string, publicKey string) (*models.RequestAliasResult, error)
 }

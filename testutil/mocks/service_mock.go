@@ -48,7 +48,12 @@ func (m *MockAccountService) TokenTransfer(ctx context.Context, amount, from, to
 	return args.Get(0).(*models.TokenTransferResponse), args.Error(1)
 }
 
-func (m *MockAccountService) CheckAliasAddress(ctx context.Context, alias string) (*dataserviceapi.AliasAddress, error) {
+func (m *MockAccountService) CheckAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error) {
 	args := m.Called(alias)
-	return args.Get(0).(*dataserviceapi.AliasAddress), args.Error(1)
+	return args.Get(0).(*models.AliasAddress), args.Error(1)
+}
+
+func(m MockAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
+	args := m.Called(publicKey, hint)
+	return args.Get(0).(*models.RequestAliasResult), args.Error(1)
 }

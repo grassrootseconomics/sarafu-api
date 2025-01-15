@@ -1,12 +1,13 @@
 package dev
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -14,14 +15,16 @@ import (
 	"github.com/gofrs/uuid"
 	"git.defalsify.org/vise.git/logging"
 	"git.defalsify.org/vise.git/db"
-	fsdb "git.defalsify.org/vise.git/db/fs"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/event"
+	"git.grassecon.net/grassrootseconomics/common/phone"
+	"git.grassecon.net/grassrootseconomics/visedriver/storage"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
 
 var (
 	logg = logging.NewVanilla().WithDomain("sarafu-api.devapi")
+	aliasRegex = regexp.MustCompile("^\\+?[a-zA-Z0-9\\-_]+$")
 )
 
 const (
@@ -87,7 +90,6 @@ type Voucher struct {
 }
 
 type DevAccountService struct {
-	dir string
 	db db.Db
 	accounts map[string]Account
 	accountsTrack map[string]string
@@ -101,13 +103,12 @@ type DevAccountService struct {
 	autoVoucherValue map[string]int
 	defaultAccount string
 	emitterFunc event.EmitterFunc
+	pfx []byte
 //	accountsSession map[string]string
 }
 
-func NewDevAccountService(ctx context.Context, d string) *DevAccountService {
+func NewDevAccountService(ctx context.Context, ss storage.StorageService) *DevAccountService {
 	svc := &DevAccountService{
-		dir: d,
-		db: fsdb.NewFsDb(),
 		accounts: make(map[string]Account),
 		accountsTrack: make(map[string]string),
 		accountsAlias: make(map[string]string),
@@ -117,26 +118,40 @@ func NewDevAccountService(ctx context.Context, d string) *DevAccountService {
 		txsTrack: make(map[string]string),
 		autoVoucherValue: make(map[string]int),
 		defaultAccount: zeroAddress,
+		pfx: []byte("__"),
+	}
+	if ss != nil {
+		var err error
+		svc.db, err = ss.GetUserdataDb(ctx)
+		if err != nil {
+			panic(err)
+		}
+		svc.db.SetSession("")
+		svc.db.SetPrefix(db.DATATYPE_USERDATA)
+		err = svc.loadAll(ctx)
+		if err != nil {
+			logg.DebugCtxf(ctx, "loadall error", "err", err)
+		}
 	}
 	acc := Account{
 		Address: zeroAddress,
 	}
 	svc.accounts[acc.Address] = acc
-	err := svc.db.Connect(ctx, d)
-	if err != nil {
-		panic(err)
-	}
-	svc.db.SetPrefix(db.DATATYPE_USERDATA)
-	err = svc.loadAll(ctx)
-	if err != nil {
-		panic(err)
-	}
 	return svc
 }
 
 func (das *DevAccountService) WithEmitter(fn event.EmitterFunc) *DevAccountService {
 	das.emitterFunc = fn
 	return das
+}
+
+func (das *DevAccountService) WithPrefix(pfx []byte) *DevAccountService {
+	das.pfx = pfx
+	return das
+}
+
+func (das *DevAccountService) prefixKeyFor(k string, v string) []byte {
+	return append(das.pfx, []byte(k + "_" + v)...)
 }
 
 func (das *DevAccountService) loadAccount(ctx context.Context, pubKey string, v []byte) error {
@@ -171,7 +186,7 @@ func (das *DevAccountService) loadTx(ctx context.Context, hsh string, v []byte) 
 func (das *DevAccountService) loadItem(ctx context.Context, k []byte, v []byte) error {
 	var err error
 	s := string(k)
-	ss := strings.SplitN(s, "_", 2)
+	ss := strings.SplitN(s[2:], "_", 2)
 	if len(ss) != 2 {
 		return fmt.Errorf("malformed key: %s", s)
 	}
@@ -179,6 +194,8 @@ func (das *DevAccountService) loadItem(ctx context.Context, k []byte, v []byte) 
 		err = das.loadAccount(ctx, ss[1], v)
 	} else if ss[0] == "tx" {
 		err = das.loadTx(ctx, ss[1], v)
+	} else {
+		logg.ErrorCtxf(ctx, "unknown double underscore key", "key", ss[0])
 	}
 	return err
 }
@@ -186,18 +203,19 @@ func (das *DevAccountService) loadItem(ctx context.Context, k []byte, v []byte) 
 // TODO: Add connect tx and account
 // TODO: update balance
 func (das *DevAccountService) loadAll(ctx context.Context) error {
-	d, err := os.ReadDir(das.dir)
+	dumper, err := das.db.Dump(ctx, []byte{})
 	if err != nil {
 		return err
 	}
-	for _, v := range(d) {
-		// TODO: move decoding to vise
-		fp := v.Name()
-		k := []byte(fp[1:])
-		v, err := das.db.Get(ctx, k)
-		if err != nil {
-			return err
+	for true {
+		k, v := dumper.Next(ctx)
+		if k == nil {
+			break
 		}
+		if !bytes.HasPrefix(k, das.pfx) {
+			continue
+		}
+
 		err = das.loadItem(ctx, k, v)
 		if err != nil {
 			return err
@@ -295,11 +313,16 @@ func (das *DevAccountService) balanceAuto(ctx context.Context, pubKey string) er
 }
 
 func (das *DevAccountService) saveAccount(ctx context.Context, acc Account) error {
-	k := "account_" + acc.Address
+	if das.db == nil {
+		return nil
+	}
+	k := das.prefixKeyFor("account", acc.Address)
 	v, err := json.Marshal(acc)
 	if err != nil {
 		return err
 	}
+	das.db.SetSession("")
+	das.db.SetPrefix(db.DATATYPE_USERDATA)
 	return das.db.Put(ctx, []byte(k), v)
 }
 
@@ -438,11 +461,13 @@ func (das *DevAccountService) VoucherData(ctx context.Context, address string) (
 }
 
 func (das *DevAccountService) saveTokenTransfer(ctx context.Context, mytx Tx) error {
-	k := "tx_" + mytx.Hsh
+	k := das.prefixKeyFor("tx", mytx.Hsh)
 	v, err := json.Marshal(mytx)
 	if err != nil {
 		return err
 	}
+	das.db.SetSession("")
+	das.db.SetPrefix(db.DATATYPE_USERDATA)
 	return das.db.Put(ctx, []byte(k), v)
 }
 
@@ -516,7 +541,7 @@ func (das *DevAccountService) TokenTransfer(ctx context.Context, amount, from, t
 	}, nil
 }
 
-func (das *DevAccountService) CheckAliasAddress(ctx context.Context, alias string) (*dataserviceapi.AliasAddress, error) {
+func (das *DevAccountService) CheckAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error) {
 	addr, ok := das.accountsAlias[alias]
 	if !ok {
 		return nil, fmt.Errorf("alias %s not found", alias)
@@ -525,7 +550,52 @@ func (das *DevAccountService) CheckAliasAddress(ctx context.Context, alias strin
 	if !ok {
 		return nil, fmt.Errorf("alias %s found but does not resolve", alias)
 	}
-	return &dataserviceapi.AliasAddress{
+	return &models.AliasAddress{
 		Address: acc.Address,
+	}, nil
+}
+
+func (das *DevAccountService) applyPhoneAlias(ctx context.Context, publicKey string, phoneNumber string) (bool, error) {
+	if phoneNumber[0] == '+' {
+		if !phone.IsValidPhoneNumber(phoneNumber) {
+			return false, fmt.Errorf("Invalid phoneNumber number: %v", phoneNumber)
+		}
+		logg.DebugCtxf(ctx, "matched phoneNumber alias", "phoneNumber", phoneNumber, "address", publicKey)
+		return true, nil
+	}
+	return false, nil
+}
+
+func (das *DevAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
+	var alias string
+	if !aliasRegex.MatchString(hint) {
+		return nil, fmt.Errorf("alias hint does not match: %s", publicKey)
+	}
+	acc, ok := das.accounts[publicKey]
+	if !ok {
+		return nil, fmt.Errorf("address %s not found", publicKey)
+	}
+	alias = hint
+	isPhone, err := das.applyPhoneAlias(ctx, publicKey, alias)
+	if err != nil {
+		return nil, fmt.Errorf("phone parser error: %v", err)
+	}
+	if !isPhone {
+		for true {
+			addr, ok := das.accountsAlias[alias]
+			if !ok {
+				break
+			}
+			if addr == publicKey {
+				break
+			}
+			alias += "x"
+		}
+		acc.Alias = alias
+		das.accountsAlias[alias] = publicKey
+	}
+	logg.DebugCtxf(ctx, "set alias", "addr", publicKey, "alias", alias)
+	return &models.RequestAliasResult{
+		Alias: alias,
 	}, nil
 }

@@ -3,6 +3,7 @@ package http
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"encoding/json"
 	"errors"
 	"io"
@@ -202,8 +203,8 @@ func (as *HTTPAccountService) TokenTransfer(ctx context.Context, amount, from, t
 // CheckAliasAddress retrieves the address of an alias from the API endpoint.
 // Parameters:
 //   - alias: The alias of the user.
-func (as *HTTPAccountService) CheckAliasAddress(ctx context.Context, alias string) (*dataserviceapi.AliasAddress, error) {
-	var r dataserviceapi.AliasAddress
+func (as *HTTPAccountService) CheckAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error) {
+	var r models.AliasAddress
 
 	ep, err := url.JoinPath(config.CheckAliasURL, alias)
 	if err != nil {
@@ -217,6 +218,10 @@ func (as *HTTPAccountService) CheckAliasAddress(ctx context.Context, alias strin
 
 	_, err = doRequest(ctx, req, &r)
 	return &r, err
+}
+
+func (as *HTTPAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
+	return nil, fmt.Errorf("not yet implemented")
 }
 
 // TODO: remove eth-custodial api dependency

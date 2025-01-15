@@ -50,10 +50,16 @@ func(m MockApi) VoucherData(ctx context.Context, address string) (*models.Vouche
 	return m.VoucherDataContent, nil
 }
 
-func(m MockApi) CheckAliasAddress(ctx context.Context, alias string) (*dataserviceapi.AliasAddress, error) {
+func(m MockApi) CheckAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error) {
+	return nil, nil
+}
+
+func(m MockApi) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
 	return nil, nil
 }
 
 func(m MockApi) TokenTransfer(ctx context.Context, amount, from, to, tokenAddress string) (*models.TokenTransferResponse, error) {
 	return nil, nil
 }
+
+
