@@ -324,6 +324,10 @@ func (das *DevAccountService) balanceAuto(ctx context.Context, pubKey string) er
 	return nil
 }
 
+func (das *DevAccountService) GetAliases(ctx context.Context) map[string]string {
+	return das.accountsAlias
+}
+
 func (das *DevAccountService) saveAccount(ctx context.Context, acc Account) error {
 	if das.db == nil {
 		return nil
@@ -598,12 +602,22 @@ func (das *DevAccountService) applyPhoneAlias(ctx context.Context, publicKey str
 
 func (das *DevAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
 	var alias string
+	uid, err := uuid.NewV4()
 	if !aliasRegex.MatchString(hint) {
 		return nil, fmt.Errorf("alias hint does not match: %s", publicKey)
 	}
 	acc, ok := das.accounts[publicKey]
 	if !ok {
-		return nil, fmt.Errorf("address %s not found", publicKey)
+		//Handle accounts created via the api
+		acc = Account{
+			Track:   uid.String(),
+			Address: publicKey,
+		}
+		err = das.saveAccount(ctx, acc)
+		if err != nil {
+			return nil, err
+		}
+		das.accounts[publicKey] = acc
 	}
 	alias = hint
 	isPhone, err := das.applyPhoneAlias(ctx, publicKey, alias)
