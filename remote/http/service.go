@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -13,14 +12,15 @@ import (
 	"regexp"
 
 	"git.grassecon.net/grassrootseconomics/sarafu-api/config"
+	"git.grassecon.net/grassrootseconomics/sarafu-api/dev"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
+	"git.grassecon.net/grassrootseconomics/visedriver/testutil/mocks"
 	"github.com/grassrootseconomics/eth-custodial/pkg/api"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
 
 var (
-	aliasRegex   = regexp.MustCompile("^\\+?[a-zA-Z0-9\\-_]+$")
-	searchDomain = ".sarafu.eth"
+	aliasRegex = regexp.MustCompile("^\\+?[a-zA-Z0-9\\-_]+$")
 )
 
 type HTTPAccountService struct {
@@ -228,15 +228,9 @@ func (as *HTTPAccountService) CheckAliasAddress(ctx context.Context, alias strin
 
 // TODO: Use actual custodial api to request available alias
 func (as *HTTPAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
-	var alias string
-	if !aliasRegex.MatchString(hint) {
-		return nil, fmt.Errorf("alias hint does not match: %s", publicKey)
-	}
-	alias = hint
-	alias = alias + searchDomain
-	return &models.RequestAliasResult{
-		Alias: alias,
-	}, nil
+	storageService := mocks.NewMemStorageService(ctx)
+	svc := dev.NewDevAccountService(ctx, storageService)
+	return svc.RequestAlias(ctx, publicKey, hint)
 }
 
 // TODO: remove eth-custodial api dependency
