@@ -23,16 +23,17 @@ import (
 )
 
 var (
-	logg       = logging.NewVanilla().WithDomain("sarafu-api.devapi")
-	aliasRegex = regexp.MustCompile("^\\+?[a-zA-Z0-9\\-_]+$")
-	searchDomain  = ".sarafu.local"
+	logg         = logging.NewVanilla().WithDomain("sarafu-api.devapi")
+	aliasRegex   = regexp.MustCompile("^\\+?[a-zA-Z0-9\\-_]+$")
+	searchDomain = ".sarafu.local"
 )
 
 const (
-	pubKeyLen       int    = 20
-	hashLen         int    = 32
-	defaultDecimals        = 6
-	zeroAddress     string = "0x0000000000000000000000000000000000000000"
+	pubKeyLen             int     = 20
+	hashLen               int     = 32
+	defaultDecimals               = 6
+	zeroAddress           string  = "0x0000000000000000000000000000000000000000"
+	defaultVoucherBalance float64 = 500.00
 )
 
 type Tx struct {
@@ -105,7 +106,6 @@ type DevAccountService struct {
 	defaultAccount   string
 	emitterFunc      event.EmitterFunc
 	pfx              []byte
-	// accountsSession map[string]string
 }
 
 func NewDevAccountService(ctx context.Context, ss storage.StorageService) *DevAccountService {
@@ -342,13 +342,17 @@ func (das *DevAccountService) saveAlias(ctx context.Context, alias map[string]st
 	if das.db == nil {
 		return fmt.Errorf("Db cannot be nil")
 	}
+	sessionId, ok := ctx.Value("SessionId").(string)
+	if !ok {
+		return fmt.Errorf("unresolved session id")
+	}
 	for k, v := range alias {
 		k_ := das.prefixKeyFor("alias", k)
 		v_, err := json.Marshal(v)
 		if err != nil {
 			return err
 		}
-		das.db.SetSession("")
+		das.db.SetSession(sessionId)
 		das.db.SetPrefix(db.DATATYPE_USERDATA)
 		return das.db.Put(ctx, []byte(k_), v_)
 	}
@@ -431,7 +435,7 @@ func (das *DevAccountService) FetchVouchers(ctx context.Context, publicKey strin
 			ContractAddress: voucher.Address,
 			TokenSymbol:     voucher.Symbol,
 			TokenDecimals:   strconv.Itoa(voucher.Decimals),
-			Balance:         strconv.Itoa(500),
+			Balance:         strconv.Itoa(int(defaultVoucherBalance)),
 		})
 	}
 
