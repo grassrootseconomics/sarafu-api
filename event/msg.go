@@ -8,12 +8,12 @@ import (
 const (
 	// TODO: integrate with sarafu-vise-events
 	EventTokenTransferTag = "TOKEN_TRANSFER"
-	EventTokenMintTag = "TOKEN_MINT"
-	EventRegistrationTag = "CUSTODIAL_REGISTRATION"
+	EventTokenMintTag     = "TOKEN_MINT"
+	EventRegistrationTag  = "CUSTODIAL_REGISTRATION"
 )
 
 type Msg struct {
-	Typ string
+	Typ  string
 	Item any
 }
 
@@ -26,17 +26,17 @@ type EventCustodialRegistration struct {
 
 // fields used for handling token transfer event.
 type EventTokenTransfer struct {
-	To string
-	Value int
+	To             string
+	Value          int
 	VoucherAddress string
-	TxHash string
-	From string
+	TxHash         string
+	From           string
 }
 
 type EventTokenMint struct {
-	To string
-	Value int
-	TxHash string
+	To             string
+	Value          int
+	TxHash         string
 	VoucherAddress string
 }
 

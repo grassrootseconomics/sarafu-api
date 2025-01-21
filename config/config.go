@@ -71,4 +71,3 @@ func LoadConfig() error {
 	CheckAliasURL, _ = url.JoinPath(dataURLBase, AliasPrefix)
 	return nil
 }
-
