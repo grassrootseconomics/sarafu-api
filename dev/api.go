@@ -12,65 +12,67 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gofrs/uuid"
-	"git.defalsify.org/vise.git/logging"
 	"git.defalsify.org/vise.git/db"
-	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
-	"git.grassecon.net/grassrootseconomics/sarafu-api/event"
+	"git.defalsify.org/vise.git/logging"
 	"git.grassecon.net/grassrootseconomics/common/phone"
+	"git.grassecon.net/grassrootseconomics/sarafu-api/event"
+	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
 	"git.grassecon.net/grassrootseconomics/visedriver/storage"
+	"github.com/gofrs/uuid"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
 
 var (
-	logg = logging.NewVanilla().WithDomain("sarafu-api.devapi")
-	aliasRegex = regexp.MustCompile("^\\+?[a-zA-Z0-9\\-_]+$")
+	logg         = logging.NewVanilla().WithDomain("sarafu-api.devapi")
+	aliasRegex   = regexp.MustCompile("^\\+?[a-zA-Z0-9\\-_]+$")
+	searchDomain = ".sarafu.local"
 )
 
 const (
-	pubKeyLen int = 20
-	hashLen int = 32
-	defaultDecimals = 6
-	zeroAddress string = "0x0000000000000000000000000000000000000000"
+	pubKeyLen             int     = 20
+	hashLen               int     = 32
+	defaultDecimals               = 6
+	zeroAddress           string  = "0x0000000000000000000000000000000000000000"
+	defaultVoucherBalance float64 = 500.00
 )
 
 type Tx struct {
-	Track string `json: "track"`
-	Hsh string `json:"hash"`
-	To string `json:"to"`
-	From string `json: "from"`
-	Voucher string `json: "voucher"`
-	Value int `json: "value"`
-	When time.Time `json: "when"`
+	Track   string    `json: "track"`
+	Hsh     string    `json:"hash"`
+	To      string    `json:"to"`
+	From    string    `json: "from"`
+	Voucher string    `json: "voucher"`
+	Value   int       `json: "value"`
+	When    time.Time `json: "when"`
 }
 
 func (t *Tx) ToTransferEvent() event.EventTokenTransfer {
 	return event.EventTokenTransfer{
-		To: t.To,
-		Value: t.Value,
+		To:             t.To,
+		Value:          t.Value,
 		VoucherAddress: t.Voucher,
-		TxHash: t.Hsh,
-		From: t.From,
+		TxHash:         t.Hsh,
+		From:           t.From,
 	}
 }
 
 func (t *Tx) ToMintEvent() event.EventTokenMint {
 	return event.EventTokenMint{
-		To: t.To,
-		Value: t.Value,
+		To:             t.To,
+		Value:          t.Value,
 		VoucherAddress: t.Voucher,
-		TxHash: t.Hsh,
+		TxHash:         t.Hsh,
 	}
 }
 
 type Account struct {
-	Track string `json: "track"`
-	Address string `json: "address"`
-	Nonce int `json: "nonce"`
-	DefaultVoucher string `json: "defaultVoucher"`
-	Balances map[string]int `json: "balances"` 
-	Alias string
-	Txs []string `json: "txs"`
+	Track          string         `json: "track"`
+	Address        string         `json: "address"`
+	Nonce          int            `json: "nonce"`
+	DefaultVoucher string         `json: "defaultVoucher"`
+	Balances       map[string]int `json: "balances"`
+	Alias          string
+	Txs            []string `json: "txs"`
 }
 
 func (a *Account) ToRegistrationEvent() event.EventCustodialRegistration {
@@ -80,45 +82,44 @@ func (a *Account) ToRegistrationEvent() event.EventCustodialRegistration {
 }
 
 type Voucher struct {
-	Name string `json: "name"`
-	Address string `json: "address"`
-	Symbol string `json: "symbol"`
-	Decimals int `json: "decimals"`
-	Sink string `json: "sink"`
+	Name      string `json: "name"`
+	Address   string `json: "address"`
+	Symbol    string `json: "symbol"`
+	Decimals  int    `json: "decimals"`
+	Sink      string `json: "sink"`
 	Commodity string `json: "commodity"`
-	Location string `json: "location"`
+	Location  string `json: "location"`
 }
 
 type DevAccountService struct {
-	db db.Db
-	accounts map[string]Account
-	accountsTrack map[string]string
-	accountsAlias map[string]string
-	vouchers map[string]Voucher
-	vouchersAddress map[string]string
-	txs map[string]Tx
-	txsTrack map[string]string
-	toAutoCreate bool
-	autoVouchers []string
+	db               db.Db
+	accounts         map[string]Account
+	accountsTrack    map[string]string
+	accountsAlias    map[string]string
+	vouchers         map[string]Voucher
+	vouchersAddress  map[string]string
+	txs              map[string]Tx
+	txsTrack         map[string]string
+	toAutoCreate     bool
+	autoVouchers     []string
 	autoVoucherValue map[string]int
-	defaultAccount string
-	emitterFunc event.EmitterFunc
-	pfx []byte
-//	accountsSession map[string]string
+	defaultAccount   string
+	emitterFunc      event.EmitterFunc
+	pfx              []byte
 }
 
 func NewDevAccountService(ctx context.Context, ss storage.StorageService) *DevAccountService {
 	svc := &DevAccountService{
-		accounts: make(map[string]Account),
-		accountsTrack: make(map[string]string),
-		accountsAlias: make(map[string]string),
-		vouchers: make(map[string]Voucher),
-		vouchersAddress: make(map[string]string),
-		txs: make(map[string]Tx),
-		txsTrack: make(map[string]string),
+		accounts:         make(map[string]Account),
+		accountsTrack:    make(map[string]string),
+		accountsAlias:    make(map[string]string),
+		vouchers:         make(map[string]Voucher),
+		vouchersAddress:  make(map[string]string),
+		txs:              make(map[string]Tx),
+		txsTrack:         make(map[string]string),
 		autoVoucherValue: make(map[string]int),
-		defaultAccount: zeroAddress,
-		pfx: []byte("__"),
+		defaultAccount:   zeroAddress,
+		pfx:              []byte("__"),
 	}
 	if ss != nil {
 		var err error
@@ -151,7 +152,7 @@ func (das *DevAccountService) WithPrefix(pfx []byte) *DevAccountService {
 }
 
 func (das *DevAccountService) prefixKeyFor(k string, v string) []byte {
-	return append(das.pfx, []byte(k + "_" + v)...)
+	return append(das.pfx, []byte(k+"_"+v)...)
 }
 
 func (das *DevAccountService) loadAccount(ctx context.Context, pubKey string, v []byte) error {
@@ -183,6 +184,15 @@ func (das *DevAccountService) loadTx(ctx context.Context, hsh string, v []byte) 
 	return nil
 }
 
+func (das *DevAccountService) loadAlias(ctx context.Context, alias string, key []byte) error {
+	result, err := das.db.Get(ctx, key)
+	if err != nil {
+		return err
+	}
+	das.accountsAlias[alias] = strings.ReplaceAll(string(result), `"`, "")
+	return nil
+}
+
 func (das *DevAccountService) loadItem(ctx context.Context, k []byte, v []byte) error {
 	var err error
 	s := string(k)
@@ -194,6 +204,8 @@ func (das *DevAccountService) loadItem(ctx context.Context, k []byte, v []byte) 
 		err = das.loadAccount(ctx, ss[1], v)
 	} else if ss[0] == "tx" {
 		err = das.loadTx(ctx, ss[1], v)
+	} else if ss[0] == "alias" {
+		err = das.loadAlias(ctx, ss[1], k)
 	} else {
 		logg.ErrorCtxf(ctx, "unknown double underscore key", "key", ss[0])
 	}
@@ -225,7 +237,7 @@ func (das *DevAccountService) loadAll(ctx context.Context) error {
 }
 
 func (das *DevAccountService) indexAll(ctx context.Context) error {
-	for k, v := range(das.txs) {
+	for k, v := range das.txs {
 		acc := das.accounts[v.From]
 		acc.Txs = append(acc.Txs, k)
 		logg.TraceCtxf(ctx, "add tx to sender index", "from", v.From, "tx", k)
@@ -265,8 +277,8 @@ func (das *DevAccountService) AddVoucher(ctx context.Context, symbol string) err
 	z := h.Sum(nil)
 	address := fmt.Sprintf("0x%x", z)
 	das.vouchers[symbol] = Voucher{
-		Name: symbol,
-		Symbol: symbol,
+		Name:    symbol,
+		Symbol:  symbol,
 		Address: address,
 	}
 	das.vouchersAddress[address] = symbol
@@ -288,14 +300,14 @@ func (das *DevAccountService) CheckBalance(ctx context.Context, publicKey string
 	if !ok {
 		return nil, fmt.Errorf("balance not found for default token %s pubkey %v", acc.DefaultVoucher, publicKey)
 	}
-	return &models.BalanceResult {
+	return &models.BalanceResult{
 		Balance: strconv.Itoa(bal),
-		Nonce: json.Number(strconv.Itoa(acc.Nonce)),
+		Nonce:   json.Number(strconv.Itoa(acc.Nonce)),
 	}, nil
 }
 
 func (das *DevAccountService) balanceAuto(ctx context.Context, pubKey string) error {
-	for _, v := range(das.autoVouchers) {
+	for _, v := range das.autoVouchers {
 		voucher, ok := das.vouchers[v]
 		if !ok {
 			return fmt.Errorf("balance auto voucher set but not resolved: %s", v)
@@ -312,6 +324,10 @@ func (das *DevAccountService) balanceAuto(ctx context.Context, pubKey string) er
 	return nil
 }
 
+func (das *DevAccountService) GetAliases(ctx context.Context) map[string]string {
+	return das.accountsAlias
+}
+
 func (das *DevAccountService) saveAccount(ctx context.Context, acc Account) error {
 	if das.db == nil {
 		return nil
@@ -324,6 +340,27 @@ func (das *DevAccountService) saveAccount(ctx context.Context, acc Account) erro
 	das.db.SetSession("")
 	das.db.SetPrefix(db.DATATYPE_USERDATA)
 	return das.db.Put(ctx, []byte(k), v)
+}
+
+func (das *DevAccountService) saveAlias(ctx context.Context, alias map[string]string) error {
+	if das.db == nil {
+		return fmt.Errorf("Db cannot be nil")
+	}
+	sessionId, ok := ctx.Value("SessionId").(string)
+	if !ok {
+		return fmt.Errorf("unresolved session id")
+	}
+	for k, v := range alias {
+		k_ := das.prefixKeyFor("alias", k)
+		v_, err := json.Marshal(v)
+		if err != nil {
+			return err
+		}
+		das.db.SetSession(sessionId)
+		das.db.SetPrefix(db.DATATYPE_USERDATA)
+		return das.db.Put(ctx, []byte(k_), v_)
+	}
+	return nil
 }
 
 func (das *DevAccountService) CreateAccount(ctx context.Context) (*models.AccountResult, error) {
@@ -341,7 +378,7 @@ func (das *DevAccountService) CreateAccount(ctx context.Context) (*models.Accoun
 	}
 	pubKey := fmt.Sprintf("0x%x", b)
 	acc := Account{
-		Track: uid.String(),
+		Track:   uid.String(),
 		Address: pubKey,
 	}
 
@@ -363,7 +400,7 @@ func (das *DevAccountService) CreateAccount(ctx context.Context) (*models.Accoun
 
 	if das.emitterFunc != nil {
 		msg := event.Msg{
-			Typ: event.EventRegistrationTag,
+			Typ:  event.EventRegistrationTag,
 			Item: acc,
 		}
 		err = das.emitterFunc(ctx, msg)
@@ -374,7 +411,7 @@ func (das *DevAccountService) CreateAccount(ctx context.Context) (*models.Accoun
 	logg.TraceCtxf(ctx, "account created", "account", acc)
 
 	return &models.AccountResult{
-		PublicKey: pubKey,
+		PublicKey:  pubKey,
 		TrackingId: uid.String(),
 	}, nil
 }
@@ -392,22 +429,20 @@ func (das *DevAccountService) TrackAccountStatus(ctx context.Context, publicKey 
 
 func (das *DevAccountService) FetchVouchers(ctx context.Context, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
 	var holdings []dataserviceapi.TokenHoldings
-	acc, ok := das.accounts[publicKey]
+	_, ok := das.accounts[publicKey]
 	if !ok {
 		return nil, fmt.Errorf("account not found (publickey): %v", publicKey)
 	}
-	for k, v := range(acc.Balances) {
-		voucher, ok := das.vouchers[k]
-		if !ok {
-			return nil, fmt.Errorf("voucher has balance but object not found: %v", k)
-		}
+	//TODO: Iterate over the account acc.Balances object
+	for _, voucher := range das.vouchers {
 		holdings = append(holdings, dataserviceapi.TokenHoldings{
 			ContractAddress: voucher.Address,
-			TokenSymbol: voucher.Symbol,
-			TokenDecimals: strconv.Itoa(voucher.Decimals),
-			Balance: strconv.Itoa(v),
+			TokenSymbol:     voucher.Symbol,
+			TokenDecimals:   strconv.Itoa(voucher.Decimals),
+			Balance:         strconv.Itoa(int(defaultVoucherBalance)),
 		})
 	}
+
 	return holdings, nil
 }
 
@@ -417,24 +452,24 @@ func (das *DevAccountService) FetchTransactions(ctx context.Context, publicKey s
 	if !ok {
 		return nil, fmt.Errorf("account not found (publickey): %v", publicKey)
 	}
-	for i, v := range(acc.Txs) {
+	for i, v := range acc.Txs {
 		mytx := das.txs[v]
 		if i == 10 {
-			break	
+			break
 		}
 		voucher, ok := das.vouchers[mytx.Voucher]
 		if !ok {
 			return nil, fmt.Errorf("voucher %s in tx list but not found in voucher list", mytx.Voucher)
 		}
 		lasttx = append(lasttx, dataserviceapi.Last10TxResponse{
-			Sender: mytx.From,
-			Recipient: mytx.To,
-			TransferValue: strconv.Itoa(mytx.Value),
+			Sender:          mytx.From,
+			Recipient:       mytx.To,
+			TransferValue:   strconv.Itoa(mytx.Value),
 			ContractAddress: voucher.Address,
-			TxHash: mytx.Hsh,
-			DateBlock: mytx.When,
-			TokenSymbol: voucher.Symbol,
-			TokenDecimals: strconv.Itoa(voucher.Decimals),
+			TxHash:          mytx.Hsh,
+			DateBlock:       mytx.When,
+			TokenSymbol:     voucher.Symbol,
+			TokenDecimals:   strconv.Itoa(voucher.Decimals),
 		})
 	}
 	return lasttx, nil
@@ -450,13 +485,12 @@ func (das *DevAccountService) VoucherData(ctx context.Context, address string) (
 		return nil, fmt.Errorf("voucher address %v found but does not resolve", address)
 	}
 	return &models.VoucherDataResult{
-		TokenName: voucher.Name,
-		TokenSymbol: voucher.Symbol,
-		TokenDecimals: voucher.Decimals,
-		SinkAddress: voucher.Sink,
+		TokenName:      voucher.Name,
+		TokenSymbol:    voucher.Symbol,
+		TokenDecimals:  voucher.Decimals,
+		SinkAddress:    voucher.Sink,
 		TokenCommodity: voucher.Commodity,
-		TokenLocation: voucher.Location,
-
+		TokenLocation:  voucher.Location,
 	}, nil
 }
 
@@ -481,12 +515,12 @@ func (das *DevAccountService) TokenTransfer(ctx context.Context, amount, from, t
 	}
 	accFrom, ok := das.accounts[from]
 	if !ok {
-		return nil, fmt.Errorf("sender account %v not found", from)	
+		return nil, fmt.Errorf("sender account %v not found", from)
 	}
 	accTo, ok := das.accounts[to]
 	if !ok {
 		if !das.toAutoCreate {
-			return nil, fmt.Errorf("recipient account %v not found, and not creating", from)	
+			return nil, fmt.Errorf("recipient account %v not found, and not creating", from)
 		}
 	}
 
@@ -512,13 +546,13 @@ func (das *DevAccountService) TokenTransfer(ctx context.Context, amount, from, t
 	}
 	hsh := fmt.Sprintf("0x%x", b)
 	mytx := Tx{
-		Hsh: hsh,
-		To: accTo.Address,
-		From: accFrom.Address,
+		Hsh:     hsh,
+		To:      accTo.Address,
+		From:    accFrom.Address,
 		Voucher: voucher.Symbol,
-		Value: value,
-		Track: uid.String(),
-		When: time.Now(),
+		Value:   value,
+		Track:   uid.String(),
+		When:    time.Now(),
 	}
 	err = das.saveTokenTransfer(ctx, mytx)
 	if err != nil {
@@ -527,7 +561,7 @@ func (das *DevAccountService) TokenTransfer(ctx context.Context, amount, from, t
 	das.txs[hsh] = mytx
 	if das.emitterFunc != nil {
 		msg := event.Msg{
-			Typ: event.EventTokenTransferTag,
+			Typ:  event.EventTokenTransferTag,
 			Item: mytx,
 		}
 		err = das.emitterFunc(ctx, msg)
@@ -568,12 +602,22 @@ func (das *DevAccountService) applyPhoneAlias(ctx context.Context, publicKey str
 
 func (das *DevAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
 	var alias string
+	uid, err := uuid.NewV4()
 	if !aliasRegex.MatchString(hint) {
 		return nil, fmt.Errorf("alias hint does not match: %s", publicKey)
 	}
 	acc, ok := das.accounts[publicKey]
 	if !ok {
-		return nil, fmt.Errorf("address %s not found", publicKey)
+		//Handle accounts created via the api
+		acc = Account{
+			Track:   uid.String(),
+			Address: publicKey,
+		}
+		err = das.saveAccount(ctx, acc)
+		if err != nil {
+			return nil, err
+		}
+		das.accounts[publicKey] = acc
 	}
 	alias = hint
 	isPhone, err := das.applyPhoneAlias(ctx, publicKey, alias)
@@ -592,7 +636,12 @@ func (das *DevAccountService) RequestAlias(ctx context.Context, publicKey string
 			alias += "x"
 		}
 		acc.Alias = alias
+		alias = alias + searchDomain
 		das.accountsAlias[alias] = publicKey
+		err := das.saveAlias(ctx, map[string]string{alias: publicKey})
+		if err != nil {
+			return nil, fmt.Errorf("Failed to save the account alias with error:  %s", err.Error())
+		}
 	}
 	logg.DebugCtxf(ctx, "set alias", "addr", publicKey, "alias", alias)
 	return &models.RequestAliasResult{

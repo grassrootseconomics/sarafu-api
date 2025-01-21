@@ -9,6 +9,7 @@ import (
 
 func TestApiRequestAlias(t *testing.T) {
 	ctx := context.Background()
+	ctx = context.WithValue(ctx, "SessionId", "+25471234565")
 	storageService := mocks.NewMemStorageService(ctx)
 	svc := NewDevAccountService(ctx, storageService)
 	ra, err := svc.CreateAccount(ctx)
@@ -16,10 +17,10 @@ func TestApiRequestAlias(t *testing.T) {
 		t.Fatal(err)
 	}
 	addr := ra.PublicKey
-	
+
 	_, err = svc.RequestAlias(ctx, addr, "+254f00")
 	if err == nil {
-		t.Fatalf("expected error")		
+		t.Fatalf("expected error")
 	}
 	alias := "+254712345678"
 	rb, err := svc.RequestAlias(ctx, addr, alias)
@@ -39,6 +40,7 @@ func TestApiRequestAlias(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	alias = "foo.sarafu.local"
 	if rb.Alias != alias {
 		t.Fatalf("expected '%s', got '%s'", alias, rb.Alias)
 	}
@@ -56,12 +58,12 @@ func TestApiRequestAlias(t *testing.T) {
 		t.Fatal(err)
 	}
 	addr = ra.PublicKey
-
+	alias = "foox"
 	rb, err = svc.RequestAlias(ctx, addr, alias)
 	if err != nil {
 		t.Fatal(err)
 	}
-	alias = "foox"
+	alias = "foox.sarafu.local"
 	if rb.Alias != alias {
 		t.Fatalf("expected '%s', got '%s'", alias, rb.Alias)
 	}
