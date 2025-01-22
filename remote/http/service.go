@@ -14,7 +14,7 @@ import (
 	"git.grassecon.net/grassrootseconomics/sarafu-api/config"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/dev"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
-	"git.grassecon.net/grassrootseconomics/visedriver/testutil/mocks"
+	"git.grassecon.net/grassrootseconomics/visedriver/storage"
 	"github.com/grassrootseconomics/eth-custodial/pkg/api"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
@@ -24,6 +24,7 @@ var (
 )
 
 type HTTPAccountService struct {
+	ss storage.StorageService
 }
 
 // Parameters:
@@ -228,8 +229,7 @@ func (as *HTTPAccountService) CheckAliasAddress(ctx context.Context, alias strin
 
 // TODO: Use actual custodial api to request available alias
 func (as *HTTPAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
-	storageService := mocks.NewMemStorageService(ctx)
-	svc := dev.NewDevAccountService(ctx, storageService)
+	svc := dev.NewDevAccountService(ctx, as.ss)
 	return svc.RequestAlias(ctx, publicKey, hint)
 }
 
