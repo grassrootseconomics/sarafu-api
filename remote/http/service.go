@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -14,7 +15,7 @@ import (
 	"git.grassecon.net/grassrootseconomics/sarafu-api/config"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/dev"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
-	"git.grassecon.net/grassrootseconomics/visedriver/testutil/mocks"
+	"git.grassecon.net/grassrootseconomics/visedriver/storage"
 	"github.com/grassrootseconomics/eth-custodial/pkg/api"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
@@ -24,6 +25,8 @@ var (
 )
 
 type HTTPAccountService struct {
+	SS     storage.StorageService
+	UseApi bool
 }
 
 // Parameters:
@@ -210,26 +213,38 @@ func (as *HTTPAccountService) TokenTransfer(ctx context.Context, amount, from, t
 // Parameters:
 //   - alias: The alias of the user.
 func (as *HTTPAccountService) CheckAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error) {
+	if as.SS == nil {
+		return nil, fmt.Errorf("The storage service cannot be nil")
+	}
+	svc := dev.NewDevAccountService(ctx, as.SS)
+	if as.UseApi {
+		return resolveAliasAddress(ctx, alias)
+	} else {
+		return svc.CheckAliasAddress(ctx, alias)
+	}
+}
+
+func resolveAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error) {
 	var r models.AliasAddress
 
 	ep, err := url.JoinPath(config.CheckAliasURL, alias)
 	if err != nil {
 		return nil, err
 	}
-
 	req, err := http.NewRequest("GET", ep, nil)
 	if err != nil {
 		return nil, err
 	}
-
 	_, err = doRequest(ctx, req, &r)
 	return &r, err
 }
 
 // TODO: Use actual custodial api to request available alias
 func (as *HTTPAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
-	storageService := mocks.NewMemStorageService(ctx)
-	svc := dev.NewDevAccountService(ctx, storageService)
+	if as.SS == nil {
+		return nil, fmt.Errorf("The storage service cannot be nil")
+	}
+	svc := dev.NewDevAccountService(ctx, as.SS)
 	return svc.RequestAlias(ctx, publicKey, hint)
 }
 

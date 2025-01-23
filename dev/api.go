@@ -346,17 +346,13 @@ func (das *DevAccountService) saveAlias(ctx context.Context, alias map[string]st
 	if das.db == nil {
 		return fmt.Errorf("Db cannot be nil")
 	}
-	sessionId, ok := ctx.Value("SessionId").(string)
-	if !ok {
-		return fmt.Errorf("unresolved session id")
-	}
 	for k, v := range alias {
 		k_ := das.prefixKeyFor("alias", k)
 		v_, err := json.Marshal(v)
 		if err != nil {
 			return err
 		}
-		das.db.SetSession(sessionId)
+		das.db.SetSession("")
 		das.db.SetPrefix(db.DATATYPE_USERDATA)
 		return das.db.Put(ctx, []byte(k_), v_)
 	}
