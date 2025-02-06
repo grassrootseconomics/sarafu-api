@@ -202,10 +202,13 @@ func (das *DevAccountService) loadItem(ctx context.Context, k []byte, v []byte) 
 	}
 	if ss[0] == "account" {
 		err = das.loadAccount(ctx, ss[1], v)
+		logg.ErrorCtxf(ctx, "loading saved account failed", "error_load_account", err)
 	} else if ss[0] == "tx" {
 		err = das.loadTx(ctx, ss[1], v)
+		logg.ErrorCtxf(ctx, "loading transactions failed", "error_load_txs", err)
 	} else if ss[0] == "alias" {
 		err = das.loadAlias(ctx, ss[1], k)
+		logg.ErrorCtxf(ctx, "loading aliases failed", "error_load_aliases", err)
 	} else {
 		logg.ErrorCtxf(ctx, "unknown double underscore key", "key", ss[0])
 	}
@@ -574,10 +577,12 @@ func (das *DevAccountService) TokenTransfer(ctx context.Context, amount, from, t
 func (das *DevAccountService) CheckAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error) {
 	addr, ok := das.accountsAlias[alias]
 	if !ok {
+		logg.ErrorCtxf(ctx, "alias check failed", "alias", alias)
 		return nil, fmt.Errorf("alias %s not found", alias)
 	}
 	acc, ok := das.accounts[addr]
 	if !ok {
+		logg.ErrorCtxf(ctx, "failed to resolve alias", "alias", alias)
 		return nil, fmt.Errorf("alias %s found but does not resolve", alias)
 	}
 	return &models.AliasAddress{
@@ -600,6 +605,7 @@ func (das *DevAccountService) RequestAlias(ctx context.Context, publicKey string
 	var alias string
 	uid, err := uuid.NewV4()
 	if !aliasRegex.MatchString(hint) {
+		logg.ErrorCtxf(ctx, "alias hint does not match", "key", publicKey, "hint", hint)
 		return nil, fmt.Errorf("alias hint does not match: %s", publicKey)
 	}
 	acc, ok := das.accounts[publicKey]
@@ -611,6 +617,7 @@ func (das *DevAccountService) RequestAlias(ctx context.Context, publicKey string
 		}
 		err = das.saveAccount(ctx, acc)
 		if err != nil {
+			logg.ErrorCtxf(ctx, "account save failed with", "account", acc, "account_save_error", err)
 			return nil, err
 		}
 		das.accounts[publicKey] = acc
@@ -618,6 +625,7 @@ func (das *DevAccountService) RequestAlias(ctx context.Context, publicKey string
 	alias = hint
 	isPhone, err := das.applyPhoneAlias(ctx, publicKey, alias)
 	if err != nil {
+		logg.ErrorCtxf(ctx, "failed to apply phone alias", "public key", publicKey, "alias", alias, "error", err)
 		return nil, fmt.Errorf("phone parser error: %v", err)
 	}
 	if !isPhone {
@@ -636,6 +644,7 @@ func (das *DevAccountService) RequestAlias(ctx context.Context, publicKey string
 		das.accountsAlias[alias] = publicKey
 		err := das.saveAlias(ctx, map[string]string{alias: publicKey})
 		if err != nil {
+			logg.ErrorCtxf(ctx, "account save error", "public key", publicKey, "alias", alias, "alias_save_error", err)
 			return nil, fmt.Errorf("Failed to save the account alias with error:  %s", err.Error())
 		}
 	}
