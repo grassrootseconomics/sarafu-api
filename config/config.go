@@ -16,12 +16,14 @@ const (
 	voucherTransfersPathPrefix = "/api/v1/transfers/last10"
 	voucherDataPathPrefix      = "/api/v1/token"
 	AliasPrefix                = "api/v1/alias"
+	AliasEnsPrefix             = "/api/v1/bypass"
 )
 
 var (
 	custodialURLBase string
 	dataURLBase      string
 	BearerToken      string
+	aliasEnsURLBase  string
 )
 
 var (
@@ -34,6 +36,7 @@ var (
 	VoucherTransfersURL string
 	VoucherDataURL      string
 	CheckAliasURL       string
+	AliasEnsURL         string
 )
 
 func setBase() error {
@@ -41,6 +44,7 @@ func setBase() error {
 
 	custodialURLBase = env.GetEnv("CUSTODIAL_URL_BASE", "http://localhost:5003")
 	dataURLBase = env.GetEnv("DATA_URL_BASE", "http://localhost:5006")
+	aliasEnsURLBase = env.GetEnv("ALIAS_ENS_BASE", "http://localhost:5015")
 	BearerToken = env.GetEnv("BEARER_TOKEN", "")
 
 	_, err = url.Parse(custodialURLBase)
@@ -69,5 +73,6 @@ func LoadConfig() error {
 	VoucherTransfersURL, _ = url.JoinPath(dataURLBase, voucherTransfersPathPrefix)
 	VoucherDataURL, _ = url.JoinPath(dataURLBase, voucherDataPathPrefix)
 	CheckAliasURL, _ = url.JoinPath(dataURLBase, AliasPrefix)
+	AliasEnsURL, _ = url.JoinPath(aliasEnsURLBase, AliasEnsPrefix)
 	return nil
 }
