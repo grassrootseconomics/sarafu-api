@@ -239,6 +239,86 @@ func resolveAliasAddress(ctx context.Context, alias string) (*models.AliasAddres
 	return &r, err
 }
 
+func (as *HTTPAccountService) PoolDeposit(ctx context.Context, amount, from, poolAddress, tokenAddress string) (*models.PoolDepositResult, error) {
+	var r models.PoolDepositResult
+
+	//pool deposit payload
+	payload := map[string]string{
+		"amount":       amount,
+		"from":         from,
+		"poolAddress":  poolAddress,
+		"tokenAddress": tokenAddress,
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("POST", config.TokenTransferURL, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+	return &r, nil
+}
+
+func (as *HTTPAccountService) GetPoolSwapQuote(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapQuoteResult, error) {
+	var r models.PoolSwapQuoteResult
+
+	//pool swap quote payload
+	payload := map[string]string{
+		"amount":           amount,
+		"from":             from,
+		"fromTokenAddress": fromTokenAddress,
+		"poolAddress":      poolAddress,
+		"toTokenAddress":   toTokenAddress,
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("POST", config.PoolSwapQuoteURL, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+	return &r, nil
+}
+
+func (as *HTTPAccountService) PoolSwap(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapResult, error) {
+	var r models.PoolSwapResult
+
+	//swap payload
+	payload := map[string]string{
+		"amount":           amount,
+		"from":             from,
+		"fromTokenAddress": fromTokenAddress,
+		"poolAddress":      poolAddress,
+		"toTokenAddress":   toTokenAddress,
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("POST", config.PoolSwapQuoteURL, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+	return &r, nil
+}
+
 // TODO: Use actual custodial api to request available alias
 func (as *HTTPAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
 	if as.SS == nil {
