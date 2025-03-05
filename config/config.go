@@ -15,7 +15,10 @@ const (
 	voucherHoldingsPathPrefix  = "/api/v1/holdings"
 	voucherTransfersPathPrefix = "/api/v1/transfers/last10"
 	voucherDataPathPrefix      = "/api/v1/token"
-	AliasPrefix                = "api/v1/alias"
+	aliasPrefix                = "api/v1/alias"
+	poolDepositPrefix          = "/api/v2/pool/deposit"
+	poolSwapQoutePrefix        = "/api/v2/pool/quote"
+	poolSwapPrefix             = "/api/v2/pool/swap"
 )
 
 var (
@@ -34,6 +37,9 @@ var (
 	VoucherTransfersURL string
 	VoucherDataURL      string
 	CheckAliasURL       string
+	PoolDepositURL      string
+	PoolSwapQuoteURL    string
+	PoolSwapURL         string
 )
 
 func setBase() error {
@@ -68,6 +74,10 @@ func LoadConfig() error {
 	VoucherHoldingsURL, _ = url.JoinPath(dataURLBase, voucherHoldingsPathPrefix)
 	VoucherTransfersURL, _ = url.JoinPath(dataURLBase, voucherTransfersPathPrefix)
 	VoucherDataURL, _ = url.JoinPath(dataURLBase, voucherDataPathPrefix)
-	CheckAliasURL, _ = url.JoinPath(dataURLBase, AliasPrefix)
+	CheckAliasURL, _ = url.JoinPath(dataURLBase, aliasPrefix)
+	PoolDepositURL, _ = url.JoinPath(custodialURLBase, poolDepositPrefix)
+	PoolSwapQuoteURL, _ = url.JoinPath(custodialURLBase, poolSwapQoutePrefix)
+	PoolSwapURL, _ = url.JoinPath(custodialURLBase, poolSwapPrefix)
+
 	return nil
 }
