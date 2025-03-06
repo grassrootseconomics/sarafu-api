@@ -17,4 +17,5 @@ type AccountService interface {
 	TokenTransfer(ctx context.Context, amount, from, to, tokenAddress string) (*models.TokenTransferResponse, error)
 	CheckAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error)
 	RequestAlias(ctx context.Context, hint string, publicKey string) (*models.RequestAliasResult, error)
+	SendSMS(ctx context.Context, inviterPhone, inviteePhone string) (*models.TokenTransferResponse, error)
 }
