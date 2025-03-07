@@ -432,6 +432,11 @@ func (das *DevAccountService) CreateAccount(ctx context.Context) (*models.Accoun
 }
 
 func (das *DevAccountService) PoolDeposit(ctx context.Context, amount, from, poolAddress, tokenAddress string) (*models.PoolDepositResult, error) {
+	_, ok := das.accounts[from]
+	if !ok {
+		return nil, fmt.Errorf("account not found (publickey): %v", from)
+	}
+
 	sym, ok := das.vouchersAddress[tokenAddress]
 	if !ok {
 		return nil, fmt.Errorf("voucher address %v not found", tokenAddress)
