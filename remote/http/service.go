@@ -61,6 +61,10 @@ func (as *HTTPAccountService) TrackAccountStatus(ctx context.Context, publicKey 
 	return &r, nil
 }
 
+func (as *HTTPAccountService) ToFqdn(alias string) string {
+	return alias + ".sarafu.eth"
+}
+
 // CheckBalance retrieves the balance for a given public key from the custodial balance API endpoint.
 // Parameters:
 //   - publicKey: The public key associated with the account whose balance needs to be checked.
@@ -220,6 +224,7 @@ func (as *HTTPAccountService) CheckAliasAddress(ctx context.Context, alias strin
 	}
 	svc := dev.NewDevAccountService(ctx, as.SS)
 	if as.UseApi {
+		alias = as.ToFqdn(alias)
 		return resolveAliasAddress(ctx, alias)
 	} else {
 		return svc.CheckAliasAddress(ctx, alias)
@@ -261,6 +266,7 @@ func (as *HTTPAccountService) RequestAlias(ctx context.Context, publicKey string
 		return nil, fmt.Errorf("The storage service cannot be nil")
 	}
 	if as.UseApi {
+		hint := as.ToFqdn(hint)
 		enr, err := requestEnsAlias(ctx, publicKey, hint)
 		if err != nil {
 			return nil, err
@@ -279,7 +285,7 @@ func requestEnsAlias(ctx context.Context, publicKey string, hint string) (*model
 	if err != nil {
 		return nil, err
 	}
-	logg.InfoCtxf(ctx, "requesting alias", "endpoint", ep)
+	logg.InfoCtxf(ctx, "requesting alias", "endpoint", ep, "hint", hint)
 	//Payload with the address and hint to derive an ENS name
 	payload := map[string]string{
 		"address": publicKey,
@@ -293,6 +299,8 @@ func requestEnsAlias(ctx context.Context, publicKey string, hint string) (*model
 	if err != nil {
 		return nil, err
 	}
+	// Log the request body
+	logg.InfoCtxf(ctx, "request body", "payload", string(payloadBytes))
 	_, err = doRequest(ctx, req, &r)
 	if err != nil {
 		return nil, err
