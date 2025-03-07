@@ -1,0 +1,14 @@
+{
+    "ok": true,
+    "description": "Swap to list",
+    "result": {
+        "filtered": [
+            {
+                "contractAddress": "0x765DE816845861e75A25fCA122bb6898B8B1282a",
+                "tokenSymbol": "cUSD",
+                "tokenDecimals": "18",
+                "balance": ""
+            }
+        ]
+    }
+}
