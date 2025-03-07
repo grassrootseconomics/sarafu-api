@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"regexp"
 
+	"git.defalsify.org/vise.git/logging"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/config"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/dev"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
@@ -22,6 +23,7 @@ import (
 
 var (
 	aliasRegex = regexp.MustCompile("^\\+?[a-zA-Z0-9\\-_]+$")
+	logg       = logging.NewVanilla().WithDomain("sarafu-api.devapi")
 )
 
 type HTTPAccountService struct {
@@ -277,6 +279,7 @@ func requestEnsAlias(ctx context.Context, publicKey string, hint string) (*model
 	if err != nil {
 		return nil, err
 	}
+	logg.InfoCtxf(ctx, "requesting alias", "endpoint", ep)
 	//Payload with the address and hint to derive an ENS name
 	payload := map[string]string{
 		"address": publicKey,
@@ -294,6 +297,7 @@ func requestEnsAlias(ctx context.Context, publicKey string, hint string) (*model
 	if err != nil {
 		return nil, err
 	}
+	logg.InfoCtxf(ctx, "alias successfully assigned", "alias", r.Name)
 	return &r, nil
 }
 
