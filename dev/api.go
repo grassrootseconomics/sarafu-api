@@ -6,7 +6,9 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -91,6 +93,11 @@ type Voucher struct {
 	Location  string `json: "location"`
 }
 
+type Pool struct {
+	vouchers  []Voucher
+	poolLimit map[string]string
+}
+
 type DevAccountService struct {
 	db               db.Db
 	accounts         map[string]Account
@@ -106,6 +113,7 @@ type DevAccountService struct {
 	defaultAccount   string
 	emitterFunc      event.EmitterFunc
 	pfx              []byte
+	pool             Pool
 }
 
 func NewDevAccountService(ctx context.Context, ss storage.StorageService) *DevAccountService {
@@ -118,6 +126,7 @@ func NewDevAccountService(ctx context.Context, ss storage.StorageService) *DevAc
 		txs:              make(map[string]Tx),
 		txsTrack:         make(map[string]string),
 		autoVoucherValue: make(map[string]int),
+		pool:             Pool{},
 		defaultAccount:   zeroAddress,
 		pfx:              []byte("__"),
 	}
@@ -169,6 +178,15 @@ func (das *DevAccountService) loadAccount(ctx context.Context, pubKey string, v 
 	}
 	logg.TraceCtxf(ctx, "add account", "address", acc.Address)
 	return nil
+}
+
+func (p *Pool) hasVoucher(voucherAddress string) bool {
+	for _, value := range p.vouchers {
+		if value.Address == voucherAddress {
+			return true
+		}
+	}
+	return false
 }
 
 func (das *DevAccountService) loadTx(ctx context.Context, hsh string, v []byte) error {
@@ -415,6 +433,74 @@ func (das *DevAccountService) CreateAccount(ctx context.Context) (*models.Accoun
 	}, nil
 }
 
+func (das *DevAccountService) PoolDeposit(ctx context.Context, amount, from, poolAddress, tokenAddress string) (*models.PoolDepositResult, error) {
+	sym, ok := das.vouchersAddress[tokenAddress]
+	if !ok {
+		return nil, fmt.Errorf("voucher address %v not found", tokenAddress)
+	}
+	uid, err := uuid.NewV4()
+	if err != nil {
+		return nil, err
+	}
+
+	voucher, ok := das.vouchers[sym]
+	if !ok {
+		return nil, fmt.Errorf("voucher address %v found but does not resolve", tokenAddress)
+	}
+
+	das.pool = Pool{
+		vouchers:  append(das.pool.vouchers, voucher),
+		poolLimit: map[string]string{tokenAddress: amount},
+	}
+	return &models.PoolDepositResult{
+		TrackingId: uid.String(),
+	}, nil
+}
+
+func (das *DevAccountService) GetPoolSwapQuote(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapQuoteResult, error) {
+	_, ok := das.accounts[from]
+	if !ok {
+		return nil, fmt.Errorf("account not found (publickey): %v", from)
+	}
+	//resolve the token address you are trying to swap from(fromTokenAddress)
+	_, ok = das.vouchersAddress[fromTokenAddress]
+	if !ok {
+		return nil, fmt.Errorf("voucher address %v not found", fromTokenAddress)
+	}
+	p := das.pool
+
+	//check if  pool has voucher to swap  to
+	if !p.hasVoucher(toTokenAddress) {
+		return nil, fmt.Errorf("Voucher with address: %v not found in the pool", toTokenAddress)
+	}
+	//Return a a quote that is equal to the amount enter
+	return &models.PoolSwapQuoteResult{IncludesFeesDeduction: false, OutValue: amount}, nil
+}
+
+func (das *DevAccountService) PoolSwap(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapResult, error) {
+	uid, err := uuid.NewV4()
+	if err != nil {
+		return nil, err
+	}
+
+	_, ok := das.accounts[from]
+	if !ok {
+		return nil, fmt.Errorf("account not found (publickey): %v", from)
+	}
+	_, ok = das.vouchersAddress[fromTokenAddress]
+	if !ok {
+		return nil, fmt.Errorf("voucher address %v not found", fromTokenAddress)
+	}
+	p := das.pool
+
+	//check if  pool has voucher to swap  to
+	if !p.hasVoucher(toTokenAddress) {
+		return nil, fmt.Errorf("Voucher with address: %v not found in the pool", toTokenAddress)
+	}
+
+	return &models.PoolSwapResult{TrackingId: uid.String()}, nil
+}
+
 func (das *DevAccountService) TrackAccountStatus(ctx context.Context, publicKey string) (*models.TrackStatusResult, error) {
 	var ok bool
 	_, ok = das.accounts[publicKey]
@@ -652,4 +738,73 @@ func (das *DevAccountService) RequestAlias(ctx context.Context, publicKey string
 	return &models.RequestAliasResult{
 		Alias: alias,
 	}, nil
+}
+
+func (das *DevAccountService) FetchTopPools(ctx context.Context) ([]models.Pool, error) {
+	var (
+		r struct {
+			OK          bool   `json:"ok"`
+			Description string `json:"description"`
+			Result      struct {
+				Pools []models.Pool `json:"topPools"`
+			} `json:"result"`
+		}
+	)
+	data, err := os.ReadFile("./data/top_pools.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = json.Unmarshal(data, &r)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return r.Result.Pools, nil
+}
+
+func (das *DevAccountService) GetPoolSwappableFromVouchers(ctx context.Context) ([]models.SwappableVoucher, error) {
+	var (
+		r struct {
+			OK          bool   `json:"ok"`
+			Description string `json:"description"`
+			Result      struct {
+				SwappableVouchers []models.SwappableVoucher `json:"filtered"`
+			} `json:"result"`
+		}
+	)
+	data, err := os.ReadFile("./data/swap_from.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = json.Unmarshal(data, &r)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return r.Result.SwappableVouchers, nil
+}
+
+func (das *DevAccountService) GetPoolSwappableVouchers(ctx context.Context) ([]models.SwappableVoucher, error) {
+	var (
+		r struct {
+			OK          bool   `json:"ok"`
+			Description string `json:"description"`
+			Result      struct {
+				SwappableVouchers []models.SwappableVoucher `json:"filtered"`
+			} `json:"result"`
+		}
+	)
+	data, err := os.ReadFile("./data/swap_to.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = json.Unmarshal(data, &r)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return r.Result.SwappableVouchers, nil
 }
