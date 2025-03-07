@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 
 	"git.defalsify.org/vise.git/logging"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/config"
@@ -266,7 +267,9 @@ func (as *HTTPAccountService) RequestAlias(ctx context.Context, publicKey string
 		return nil, fmt.Errorf("The storage service cannot be nil")
 	}
 	if as.UseApi {
-		hint := as.ToFqdn(hint)
+		if !strings.Contains(hint, ".") {
+			hint = as.ToFqdn(hint)
+		}
 		enr, err := requestEnsAlias(ctx, publicKey, hint)
 		if err != nil {
 			return nil, err
