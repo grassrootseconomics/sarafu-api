@@ -8,3 +8,10 @@ type VoucherDataResult struct {
 	TokenCommodity string `json:"tokenCommodity"`
 	TokenLocation  string `json:"tokenLocation"`
 }
+
+type SwappableVoucher struct {
+	ContractAddress string `json:"contractAddress"`
+	TokenSymbol     string `json:"tokenSymbol"`
+	TokenDecimals   string `json:"tokenDecimals"`
+	Balance         string `json:"balance"`
+}
