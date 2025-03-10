@@ -226,10 +226,6 @@ func (as *HTTPAccountService) CheckAliasAddress(ctx context.Context, alias strin
 	logg.InfoCtxf(ctx, "resolving alias before formatting", "alias", alias)
 	svc := dev.NewDevAccountService(ctx, as.SS)
 	if as.UseApi {
-		if !strings.Contains(alias, ".") {
-			alias = as.ToFqdn(alias)
-		}
-		alias = as.ToFqdn(alias)
 		logg.InfoCtxf(ctx, "resolving alias to address", "alias", alias)
 		return resolveAliasAddress(ctx, alias)
 	} else {
