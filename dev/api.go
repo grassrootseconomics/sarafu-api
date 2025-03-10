@@ -6,9 +6,7 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math/rand"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -740,71 +738,88 @@ func (das *DevAccountService) RequestAlias(ctx context.Context, publicKey string
 	}, nil
 }
 
-func (das *DevAccountService) FetchTopPools(ctx context.Context) ([]models.Pool, error) {
-	var (
-		r struct {
-			OK          bool   `json:"ok"`
-			Description string `json:"description"`
-			Result      struct {
-				Pools []models.Pool `json:"topPools"`
-			} `json:"result"`
-		}
-	)
-	data, err := os.ReadFile("./data/top_pools.json")
-	if err != nil {
-		log.Fatal(err)
+func (das *DevAccountService) FetchTopPools(ctx context.Context, publicKey string) ([]dataserviceapi.PoolDetails, error) {
+	topPools := []dataserviceapi.PoolDetails{
+		{
+			PoolName:            "Kenya ROLA Pool",
+			PoolSymbol:          "ROLA",
+			PoolContractAdrress: "0x48a953cA5cf5298bc6f6Af3C608351f537AAcb9e",
+			LimiterAddress:      "",
+			VoucherRegistry:     "",
+		},
+		{
+			PoolName:            "Nairobi ROLA Pool",
+			PoolSymbol:          "NAIROBI",
+			PoolContractAdrress: "0xB0660Ac1Ee3d32ea35bc728D7CA1705Fa5A37528",
+			LimiterAddress:      "",
+			VoucherRegistry:     "",
+		},
+		{
+			PoolName:            "Friends of Kiriba Ecosystem",
+			PoolSymbol:          "FRIENDS",
+			PoolContractAdrress: "0xC4848263821FA02baB2181910A2eFb9CECb2c21C",
+			LimiterAddress:      "",
+			VoucherRegistry:     "",
+		},
+		{
+			PoolName:            "Resilient Community Waqfs",
+			PoolSymbol:          "REZILIENS",
+			PoolContractAdrress: "0x1e40951d7a28147D8B4A554C60c42766C92e2Fc6",
+			LimiterAddress:      "",
+			VoucherRegistry:     "",
+		},
+		{
+			PoolName:            "GrE Tech",
+			PoolSymbol:          "GRET",
+			PoolContractAdrress: "0xb7B9d0A264eD1a8E2418571B7AC5933C79C9c2B8",
+			LimiterAddress:      "",
+			VoucherRegistry:     "",
+		},
 	}
 
-	err = json.Unmarshal(data, &r)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return r.Result.Pools, nil
+	return topPools, nil
 }
 
-func (das *DevAccountService) GetPoolSwappableFromVouchers(ctx context.Context) ([]models.SwappableVoucher, error) {
-	var (
-		r struct {
-			OK          bool   `json:"ok"`
-			Description string `json:"description"`
-			Result      struct {
-				SwappableVouchers []models.SwappableVoucher `json:"filtered"`
-			} `json:"result"`
-		}
-	)
-	data, err := os.ReadFile("./data/swap_from.json")
-	if err != nil {
-		log.Fatal(err)
+func (das *DevAccountService) GetPoolSwappableFromVouchers(ctx context.Context, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+	swapFromList := []dataserviceapi.TokenHoldings{
+		{
+			ContractAddress: "0xc7B78Ac9ACB9E025C8234621FC515bC58179dEAe",
+			TokenSymbol:     "AMANI",
+			TokenDecimals:   "6",
+			Balance:         "",
+		},
+		{
+			ContractAddress: "0xF0C3C7581b8b96B59a97daEc8Bd48247cE078674",
+			TokenSymbol:     "AMUA",
+			TokenDecimals:   "6",
+			Balance:         "",
+		},
+		{
+			ContractAddress: "0x371455a30fc62736145Bd8429Fcc6481186f235F",
+			TokenSymbol:     "BAHARI",
+			TokenDecimals:   "6",
+			Balance:         "",
+		},
+		{
+			ContractAddress: "0x7cA6113b59c24a880F382C7E12d609a6Eb05246b",
+			TokenSymbol:     "BANGLA",
+			TokenDecimals:   "6",
+			Balance:         "",
+		},
 	}
 
-	err = json.Unmarshal(data, &r)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return r.Result.SwappableVouchers, nil
+	return swapFromList, nil
 }
 
-func (das *DevAccountService) GetPoolSwappableVouchers(ctx context.Context) ([]models.SwappableVoucher, error) {
-	var (
-		r struct {
-			OK          bool   `json:"ok"`
-			Description string `json:"description"`
-			Result      struct {
-				SwappableVouchers []models.SwappableVoucher `json:"filtered"`
-			} `json:"result"`
-		}
-	)
-	data, err := os.ReadFile("./data/swap_to.json")
-	if err != nil {
-		log.Fatal(err)
+func (das *DevAccountService) GetPoolSwappableVouchers(ctx context.Context, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+	swapToList := []dataserviceapi.TokenHoldings{
+		{
+			ContractAddress: "0x765DE816845861e75A25fCA122bb6898B8B1282a",
+			TokenSymbol:     "cUSD",
+			TokenDecimals:   "18",
+			Balance:         "",
+		},
 	}
 
-	err = json.Unmarshal(data, &r)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return r.Result.SwappableVouchers, nil
+	return swapToList, nil
 }
