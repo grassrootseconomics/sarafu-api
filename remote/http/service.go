@@ -223,9 +223,14 @@ func (as *HTTPAccountService) CheckAliasAddress(ctx context.Context, alias strin
 	if as.SS == nil {
 		return nil, fmt.Errorf("The storage service cannot be nil")
 	}
+	logg.InfoCtxf(ctx, "resolving alias before formatting", "alias", alias)
 	svc := dev.NewDevAccountService(ctx, as.SS)
 	if as.UseApi {
+		if !strings.Contains(alias, ".") {
+			alias = as.ToFqdn(alias)
+		}
 		alias = as.ToFqdn(alias)
+		logg.InfoCtxf(ctx, "resolving alias to address", "alias", alias)
 		return resolveAliasAddress(ctx, alias)
 	} else {
 		return svc.CheckAliasAddress(ctx, alias)
