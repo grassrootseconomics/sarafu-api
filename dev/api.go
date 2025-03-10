@@ -34,6 +34,8 @@ const (
 	defaultDecimals               = 6
 	zeroAddress           string  = "0x0000000000000000000000000000000000000000"
 	defaultVoucherBalance float64 = 500.00
+	cityPoolAddress       string  = "0x3b517308D858a47458aD5C8E699697C5dc91Da0F"
+	poolName              string  = "citypool"
 )
 
 type Tx struct {
@@ -92,6 +94,8 @@ type Voucher struct {
 }
 
 type Pool struct {
+	name      string
+	address   string
 	vouchers  []Voucher
 	poolLimit map[string]string
 }
@@ -124,7 +128,7 @@ func NewDevAccountService(ctx context.Context, ss storage.StorageService) *DevAc
 		txs:              make(map[string]Tx),
 		txsTrack:         make(map[string]string),
 		autoVoucherValue: make(map[string]int),
-		pool:             Pool{},
+		pool:             Pool{address: cityPoolAddress, name: poolName},
 		defaultAccount:   zeroAddress,
 		pfx:              []byte("__"),
 	}
@@ -209,6 +213,20 @@ func (das *DevAccountService) loadAlias(ctx context.Context, alias string, key [
 	return nil
 }
 
+func (das *DevAccountService) loadPoolInfo(ctx context.Context, name string, key []byte) error {
+	var pool Pool
+	poolB, err := das.db.Get(ctx, key)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(poolB, &pool)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshall pool info: %v", err)
+	}
+	das.pool = pool
+	return nil
+}
+
 func (das *DevAccountService) loadItem(ctx context.Context, k []byte, v []byte) error {
 	var err error
 	s := string(k)
@@ -225,6 +243,8 @@ func (das *DevAccountService) loadItem(ctx context.Context, k []byte, v []byte) 
 	} else if ss[0] == "alias" {
 		err = das.loadAlias(ctx, ss[1], k)
 		logg.ErrorCtxf(ctx, "loading aliases failed", "error_load_aliases", err)
+	} else if ss[0] == "pool" {
+		err = das.loadPoolInfo(ctx, ss[1], v)
 	} else {
 		logg.ErrorCtxf(ctx, "unknown double underscore key", "key", ss[0])
 	}
@@ -361,6 +381,20 @@ func (das *DevAccountService) saveAccount(ctx context.Context, acc Account) erro
 	return das.db.Put(ctx, []byte(k), v)
 }
 
+func (das *DevAccountService) savePoolInfo(ctx context.Context, pool Pool) error {
+	if das.db == nil {
+		return nil
+	}
+	k := das.prefixKeyFor("pool", pool.name)
+	v, err := json.Marshal(pool)
+	if err != nil {
+		return err
+	}
+	das.db.SetSession("")
+	das.db.SetPrefix(db.DATATYPE_USERDATA)
+	return das.db.Put(ctx, []byte(k), v)
+}
+
 func (das *DevAccountService) saveAlias(ctx context.Context, alias map[string]string) error {
 	if das.db == nil {
 		return fmt.Errorf("Db cannot be nil")
@@ -455,6 +489,7 @@ func (das *DevAccountService) PoolDeposit(ctx context.Context, amount, from, poo
 		vouchers:  append(das.pool.vouchers, voucher),
 		poolLimit: map[string]string{tokenAddress: amount},
 	}
+	das.savePoolInfo(ctx, das.pool)
 	return &models.PoolDepositResult{
 		TrackingId: uid.String(),
 	}, nil
