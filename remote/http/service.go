@@ -298,11 +298,13 @@ func (as *HTTPAccountService) GetPoolSwapQuote(ctx context.Context, amount, from
 }
 
 func (as *HTTPAccountService) GetPoolSwappableFromVouchers(ctx context.Context, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
-	return as.GetPoolSwappableFromVouchers(ctx, publicKey)
+	svc := dev.NewDevAccountService(ctx, as.SS)
+	return svc.GetPoolSwappableFromVouchers(ctx, publicKey)
 }
 
 func (as *HTTPAccountService) GetPoolSwappableVouchers(ctx context.Context, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
-	return as.GetPoolSwappableVouchers(ctx, publicKey)
+	svc := dev.NewDevAccountService(ctx, as.SS)
+	return svc.GetPoolSwappableVouchers(ctx, publicKey)
 }
 
 func (as *HTTPAccountService) PoolSwap(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapResult, error) {
