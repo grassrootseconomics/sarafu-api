@@ -778,7 +778,7 @@ func (das *DevAccountService) RequestAlias(ctx context.Context, publicKey string
 	}, nil
 }
 
-func (das *DevAccountService) FetchTopPools(ctx context.Context, publicKey string) ([]dataserviceapi.PoolDetails, error) {
+func (das *DevAccountService) FetchTopPools(ctx context.Context) ([]dataserviceapi.PoolDetails, error) {
 	topPools := []dataserviceapi.PoolDetails{
 		{
 			PoolName:            "Kenya ROLA Pool",
@@ -820,7 +820,7 @@ func (das *DevAccountService) FetchTopPools(ctx context.Context, publicKey strin
 	return topPools, nil
 }
 
-func (das *DevAccountService) GetPoolSwappableFromVouchers(ctx context.Context, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+func (das *DevAccountService) GetPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
 	swapFromList := []dataserviceapi.TokenHoldings{
 		{
 			ContractAddress: "0xc7B78Ac9ACB9E025C8234621FC515bC58179dEAe",
@@ -851,7 +851,7 @@ func (das *DevAccountService) GetPoolSwappableFromVouchers(ctx context.Context, 
 	return swapFromList, nil
 }
 
-func (das *DevAccountService) GetPoolSwappableVouchers(ctx context.Context, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+func (das *DevAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
 	swapToList := []dataserviceapi.TokenHoldings{
 		{
 			ContractAddress: "0x765DE816845861e75A25fCA122bb6898B8B1282a",

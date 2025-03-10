@@ -239,9 +239,9 @@ func resolveAliasAddress(ctx context.Context, alias string) (*models.AliasAddres
 	return &r, err
 }
 
-func (as *HTTPAccountService) FetchTopPools(ctx context.Context, publicKey string) ([]dataserviceapi.PoolDetails, error) {
+func (as *HTTPAccountService) FetchTopPools(ctx context.Context) ([]dataserviceapi.PoolDetails, error) {
 	svc := dev.NewDevAccountService(ctx, as.SS)
-	return svc.FetchTopPools(ctx, publicKey)
+	return svc.FetchTopPools(ctx)
 }
 
 func (as *HTTPAccountService) PoolDeposit(ctx context.Context, amount, from, poolAddress, tokenAddress string) (*models.PoolDepositResult, error) {
@@ -297,14 +297,14 @@ func (as *HTTPAccountService) GetPoolSwapQuote(ctx context.Context, amount, from
 	return &r, nil
 }
 
-func (as *HTTPAccountService) GetPoolSwappableFromVouchers(ctx context.Context, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+func (as *HTTPAccountService) GetPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
 	svc := dev.NewDevAccountService(ctx, as.SS)
-	return svc.GetPoolSwappableFromVouchers(ctx, publicKey)
+	return svc.GetPoolSwappableFromVouchers(ctx, poolAddress, publicKey)
 }
 
-func (as *HTTPAccountService) GetPoolSwappableVouchers(ctx context.Context, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+func (as *HTTPAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
 	svc := dev.NewDevAccountService(ctx, as.SS)
-	return svc.GetPoolSwappableVouchers(ctx, publicKey)
+	return svc.GetPoolSwappableVouchers(ctx, poolAddress, publicKey)
 }
 
 func (as *HTTPAccountService) PoolSwap(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapResult, error) {
