@@ -334,6 +334,11 @@ func (as *HTTPAccountService) PoolSwap(ctx context.Context, amount, from, fromTo
 	return &r, nil
 }
 
+func (as *HTTPAccountService) GetSwapFromTokenMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.MaxLimitResult, error) {
+	svc := dev.NewDevAccountService(ctx, as.SS)
+	return svc.GetSwapFromTokenMaxLimit(ctx, poolAddress, fromTokenAddress, toTokenAddress, publicKey)
+}
+
 // TODO: Use actual custodial api to request available alias
 func (as *HTTPAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
 	if as.SS == nil {

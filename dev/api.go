@@ -863,3 +863,9 @@ func (das *DevAccountService) GetPoolSwappableVouchers(ctx context.Context, pool
 
 	return swapToList, nil
 }
+
+func (das *DevAccountService) GetSwapFromTokenMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.MaxLimitResult, error) {
+	return &models.MaxLimitResult{
+		Max: "1339482",
+	}, nil
+}
