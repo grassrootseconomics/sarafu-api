@@ -12,3 +12,7 @@ type PoolSwapQuoteResult struct {
 type PoolSwapResult struct {
 	TrackingId string `json:"trackingId"`
 }
+
+type MaxLimitResult struct {
+	Max string `json:"max"`
+}
