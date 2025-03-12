@@ -213,17 +213,15 @@ func (das *DevAccountService) loadAlias(ctx context.Context, alias string, key [
 	return nil
 }
 
-func (das *DevAccountService) loadPoolInfo(ctx context.Context, name string, key []byte) error {
+func (das *DevAccountService) loadPoolInfo(ctx context.Context, name string, v []byte) error {
 	var pool Pool
-	poolB, err := das.db.Get(ctx, key)
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(poolB, &pool)
+
+	err := json.Unmarshal(v, &pool)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshall pool info: %v", err)
 	}
 	das.pool = pool
+	logg.InfoCtxf(ctx, "loaded pool info", "name", das.pool.name, "vouchers", das.pool.vouchers)
 	return nil
 }
 
@@ -260,13 +258,13 @@ func (das *DevAccountService) loadAll(ctx context.Context) error {
 	}
 	for true {
 		k, v := dumper.Next(ctx)
+		logg.InfoCtxf(ctx, "loading all", "key", string(k), "value", string(v))
 		if k == nil {
 			break
 		}
 		if !bytes.HasPrefix(k, das.pfx) {
 			continue
 		}
-
 		err = das.loadItem(ctx, k, v)
 		if err != nil {
 			return err
@@ -485,11 +483,13 @@ func (das *DevAccountService) PoolDeposit(ctx context.Context, amount, from, poo
 		return nil, fmt.Errorf("voucher address %v found but does not resolve", tokenAddress)
 	}
 
-	das.pool = Pool{
-		vouchers:  append(das.pool.vouchers, voucher),
-		poolLimit: map[string]string{tokenAddress: amount},
+	das.pool.vouchers = append(das.pool.vouchers, voucher)
+	das.pool.poolLimit = map[string]string{tokenAddress: amount}
+
+	err = das.savePoolInfo(ctx, das.pool)
+	if err != nil {
+		return nil, err
 	}
-	das.savePoolInfo(ctx, das.pool)
 	return &models.PoolDepositResult{
 		TrackingId: uid.String(),
 	}, nil
@@ -511,7 +511,7 @@ func (das *DevAccountService) GetPoolSwapQuote(ctx context.Context, amount, from
 	if !p.hasVoucher(toTokenAddress) {
 		return nil, fmt.Errorf("Voucher with address: %v not found in the pool", toTokenAddress)
 	}
-	//Return a a quote that is equal to the amount enter
+	//Return a a quote that is equal to the amount entered
 	return &models.PoolSwapQuoteResult{IncludesFeesDeduction: false, OutValue: amount}, nil
 }
 
