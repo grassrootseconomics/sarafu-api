@@ -36,6 +36,7 @@ const (
 	defaultVoucherBalance float64 = 500.00
 	cityPoolAddress       string  = "0x3b517308D858a47458aD5C8E699697C5dc91Da0F"
 	poolName              string  = "citypool"
+	PoolSymbol            string  = "CTY"
 )
 
 type Tx struct {
@@ -94,10 +95,11 @@ type Voucher struct {
 }
 
 type Pool struct {
-	name      string
-	address   string
-	vouchers  []Voucher
-	poolLimit map[string]string
+	Name      string            `json: "name"`
+	Symbol    string            `json: "symbol"`
+	Address   string            `json: "address"`
+	Vouchers  []Voucher         `json: "voucher"`
+	PoolLimit map[string]string `json: "poollimit"`
 }
 
 type DevAccountService struct {
@@ -128,7 +130,7 @@ func NewDevAccountService(ctx context.Context, ss storage.StorageService) *DevAc
 		txs:              make(map[string]Tx),
 		txsTrack:         make(map[string]string),
 		autoVoucherValue: make(map[string]int),
-		pool:             Pool{address: cityPoolAddress, name: poolName},
+		pool:             Pool{Address: cityPoolAddress, Name: poolName},
 		defaultAccount:   zeroAddress,
 		pfx:              []byte("__"),
 	}
@@ -183,7 +185,7 @@ func (das *DevAccountService) loadAccount(ctx context.Context, pubKey string, v 
 }
 
 func (p *Pool) hasVoucher(voucherAddress string) bool {
-	for _, value := range p.vouchers {
+	for _, value := range p.Vouchers {
 		if value.Address == voucherAddress {
 			return true
 		}
@@ -221,7 +223,7 @@ func (das *DevAccountService) loadPoolInfo(ctx context.Context, name string, v [
 		return fmt.Errorf("failed to unmarshall pool info: %v", err)
 	}
 	das.pool = pool
-	logg.InfoCtxf(ctx, "loaded pool info", "name", das.pool.name, "vouchers", das.pool.vouchers)
+	logg.InfoCtxf(ctx, "loaded pool info", "name", das.pool.Name, "vouchers", das.pool.Vouchers)
 	return nil
 }
 
@@ -297,6 +299,12 @@ func (das *DevAccountService) WithAutoVoucher(ctx context.Context, symbol string
 	das.autoVouchers = append(das.autoVouchers, symbol)
 	das.autoVoucherValue[symbol] = value
 	return das
+}
+
+func (das *DevAccountService) RegisterPool() {
+	das.pool.Name = poolName
+	das.pool.Address = cityPoolAddress
+	das.pool.Symbol = PoolSymbol
 }
 
 // TODO: add persistence for vouchers
@@ -383,7 +391,7 @@ func (das *DevAccountService) savePoolInfo(ctx context.Context, pool Pool) error
 	if das.db == nil {
 		return nil
 	}
-	k := das.prefixKeyFor("pool", pool.name)
+	k := das.prefixKeyFor("pool", pool.Name)
 	v, err := json.Marshal(pool)
 	if err != nil {
 		return err
@@ -468,7 +476,6 @@ func (das *DevAccountService) PoolDeposit(ctx context.Context, amount, from, poo
 	if !ok {
 		return nil, fmt.Errorf("account not found (publickey): %v", from)
 	}
-
 	sym, ok := das.vouchersAddress[tokenAddress]
 	if !ok {
 		return nil, fmt.Errorf("voucher address %v not found", tokenAddress)
@@ -483,8 +490,8 @@ func (das *DevAccountService) PoolDeposit(ctx context.Context, amount, from, poo
 		return nil, fmt.Errorf("voucher address %v found but does not resolve", tokenAddress)
 	}
 
-	das.pool.vouchers = append(das.pool.vouchers, voucher)
-	das.pool.poolLimit = map[string]string{tokenAddress: amount}
+	das.pool.Vouchers = append(das.pool.Vouchers, voucher)
+	das.pool.PoolLimit = map[string]string{tokenAddress: amount}
 
 	err = das.savePoolInfo(ctx, das.pool)
 	if err != nil {
@@ -779,75 +786,31 @@ func (das *DevAccountService) RequestAlias(ctx context.Context, publicKey string
 }
 
 func (das *DevAccountService) FetchTopPools(ctx context.Context) ([]dataserviceapi.PoolDetails, error) {
-	topPools := []dataserviceapi.PoolDetails{
-		{
-			PoolName:            "Kenya ROLA Pool",
-			PoolSymbol:          "ROLA",
-			PoolContractAdrress: "0x48a953cA5cf5298bc6f6Af3C608351f537AAcb9e",
-			LimiterAddress:      "",
-			VoucherRegistry:     "",
-		},
-		{
-			PoolName:            "Nairobi ROLA Pool",
-			PoolSymbol:          "NAIROBI",
-			PoolContractAdrress: "0xB0660Ac1Ee3d32ea35bc728D7CA1705Fa5A37528",
-			LimiterAddress:      "",
-			VoucherRegistry:     "",
-		},
-		{
-			PoolName:            "Friends of Kiriba Ecosystem",
-			PoolSymbol:          "FRIENDS",
-			PoolContractAdrress: "0xC4848263821FA02baB2181910A2eFb9CECb2c21C",
-			LimiterAddress:      "",
-			VoucherRegistry:     "",
-		},
-		{
-			PoolName:            "Resilient Community Waqfs",
-			PoolSymbol:          "REZILIENS",
-			PoolContractAdrress: "0x1e40951d7a28147D8B4A554C60c42766C92e2Fc6",
-			LimiterAddress:      "",
-			VoucherRegistry:     "",
-		},
-		{
-			PoolName:            "GrE Tech",
-			PoolSymbol:          "GRET",
-			PoolContractAdrress: "0xb7B9d0A264eD1a8E2418571B7AC5933C79C9c2B8",
-			LimiterAddress:      "",
-			VoucherRegistry:     "",
-		},
+	var topPools []dataserviceapi.PoolDetails
+
+	pool := dataserviceapi.PoolDetails{
+		PoolName:            das.pool.Name,
+		PoolSymbol:          das.pool.Symbol,
+		PoolContractAdrress: das.pool.Address,
 	}
+
+	// Add the citypool as the main pool
+	topPools = append(topPools, pool)
 
 	return topPools, nil
 }
 
 func (das *DevAccountService) GetPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
-	swapFromList := []dataserviceapi.TokenHoldings{
-		{
-			ContractAddress: "0xc7B78Ac9ACB9E025C8234621FC515bC58179dEAe",
-			TokenSymbol:     "AMANI",
-			TokenDecimals:   "6",
-			Balance:         "",
-		},
-		{
-			ContractAddress: "0xF0C3C7581b8b96B59a97daEc8Bd48247cE078674",
-			TokenSymbol:     "AMUA",
-			TokenDecimals:   "6",
-			Balance:         "",
-		},
-		{
-			ContractAddress: "0x371455a30fc62736145Bd8429Fcc6481186f235F",
-			TokenSymbol:     "BAHARI",
-			TokenDecimals:   "6",
-			Balance:         "",
-		},
-		{
-			ContractAddress: "0x7cA6113b59c24a880F382C7E12d609a6Eb05246b",
-			TokenSymbol:     "BANGLA",
-			TokenDecimals:   "6",
-			Balance:         "",
-		},
-	}
+	var swapFromList []dataserviceapi.TokenHoldings
 
+	for _, voucher := range das.pool.Vouchers {
+		swapFromList = append(swapFromList, dataserviceapi.TokenHoldings{
+			ContractAddress: voucher.Address,
+			TokenSymbol:     voucher.Symbol,
+			TokenDecimals:   string(defaultDecimals),
+			Balance:         fmt.Sprintf("%f", defaultVoucherBalance),
+		})
+	}
 	return swapFromList, nil
 }
 
@@ -860,7 +823,6 @@ func (das *DevAccountService) GetPoolSwappableVouchers(ctx context.Context, pool
 			Balance:         "",
 		},
 	}
-
 	return swapToList, nil
 }
 
