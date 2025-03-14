@@ -117,7 +117,7 @@ type DevAccountService struct {
 	defaultAccount   string
 	emitterFunc      event.EmitterFunc
 	pfx              []byte
-	pool             Pool
+	pools            map[string]Pool
 }
 
 func NewDevAccountService(ctx context.Context, ss storage.StorageService) *DevAccountService {
@@ -130,7 +130,7 @@ func NewDevAccountService(ctx context.Context, ss storage.StorageService) *DevAc
 		txs:              make(map[string]Tx),
 		txsTrack:         make(map[string]string),
 		autoVoucherValue: make(map[string]int),
-		pool:             Pool{Address: cityPoolAddress, Name: poolName},
+		pools:            make(map[string]Pool),
 		defaultAccount:   zeroAddress,
 		pfx:              []byte("__"),
 	}
@@ -222,8 +222,7 @@ func (das *DevAccountService) loadPoolInfo(ctx context.Context, name string, v [
 	if err != nil {
 		return fmt.Errorf("failed to unmarshall pool info: %v", err)
 	}
-	das.pool = pool
-	logg.InfoCtxf(ctx, "loaded pool info", "name", das.pool.Name, "vouchers", das.pool.Vouchers)
+	das.pools[name] = pool
 	return nil
 }
 
@@ -234,6 +233,7 @@ func (das *DevAccountService) loadItem(ctx context.Context, k []byte, v []byte) 
 	if len(ss) != 2 {
 		return fmt.Errorf("malformed key: %s", s)
 	}
+	fmt.Println("S1", ss[0])
 	if ss[0] == "account" {
 		err = das.loadAccount(ctx, ss[1], v)
 		logg.ErrorCtxf(ctx, "loading saved account failed", "error_load_account", err)
@@ -301,10 +301,29 @@ func (das *DevAccountService) WithAutoVoucher(ctx context.Context, symbol string
 	return das
 }
 
-func (das *DevAccountService) RegisterPool() {
-	das.pool.Name = poolName
-	das.pool.Address = cityPoolAddress
-	das.pool.Symbol = PoolSymbol
+func (das *DevAccountService) RegisterPool(ctx context.Context, name string, sm string) error {
+	var seedVouchers []Voucher
+
+	h := sha1.New()
+	h.Write([]byte(sm))
+	z := h.Sum(nil)
+	pooladdr := fmt.Sprintf("0x%x", z)
+
+	for _, v := range das.vouchers {
+		//pre-load vouchers with vouchers when a pool is registered
+		seedVouchers = append(seedVouchers, v)
+	}
+	p := Pool{
+		Name:     name,
+		Symbol:   sm,
+		Address:  pooladdr,
+		Vouchers: seedVouchers,
+	}
+	err := das.savePoolInfo(ctx, p)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // TODO: add persistence for vouchers
@@ -391,7 +410,7 @@ func (das *DevAccountService) savePoolInfo(ctx context.Context, pool Pool) error
 	if das.db == nil {
 		return nil
 	}
-	k := das.prefixKeyFor("pool", pool.Name)
+	k := das.prefixKeyFor("pool", pool.Address)
 	v, err := json.Marshal(pool)
 	if err != nil {
 		return err
@@ -485,15 +504,15 @@ func (das *DevAccountService) PoolDeposit(ctx context.Context, amount, from, poo
 		return nil, err
 	}
 
-	voucher, ok := das.vouchers[sym]
+	_, ok = das.vouchers[sym]
 	if !ok {
 		return nil, fmt.Errorf("voucher address %v found but does not resolve", tokenAddress)
 	}
 
-	das.pool.Vouchers = append(das.pool.Vouchers, voucher)
-	das.pool.PoolLimit = map[string]string{tokenAddress: amount}
+	// das.pool.Vouchers = append(das.pool.Vouchers, voucher)
+	// das.pool.PoolLimit = map[string]string{tokenAddress: amount}
 
-	err = das.savePoolInfo(ctx, das.pool)
+	// err = das.savePoolInfo(ctx, das.pool)
 	if err != nil {
 		return nil, err
 	}
@@ -507,17 +526,17 @@ func (das *DevAccountService) GetPoolSwapQuote(ctx context.Context, amount, from
 	if !ok {
 		return nil, fmt.Errorf("account not found (publickey): %v", from)
 	}
+	_, ok = das.pools[poolAddress]
+	if !ok {
+		return nil, fmt.Errorf("pool address %v not found", poolAddress)
+	}
+
 	//resolve the token address you are trying to swap from(fromTokenAddress)
 	_, ok = das.vouchersAddress[fromTokenAddress]
 	if !ok {
 		return nil, fmt.Errorf("voucher address %v not found", fromTokenAddress)
 	}
-	p := das.pool
 
-	//check if  pool has voucher to swap  to
-	if !p.hasVoucher(toTokenAddress) {
-		return nil, fmt.Errorf("Voucher with address: %v not found in the pool", toTokenAddress)
-	}
 	//Return a a quote that is equal to the amount entered
 	return &models.PoolSwapQuoteResult{IncludesFeesDeduction: false, OutValue: amount}, nil
 }
@@ -528,19 +547,22 @@ func (das *DevAccountService) PoolSwap(ctx context.Context, amount, from, fromTo
 		return nil, err
 	}
 
-	_, ok := das.accounts[from]
+	p, ok := das.pools[poolAddress]
+	if !ok {
+		return nil, fmt.Errorf("pool address %v not found", toTokenAddress)
+	}
+	_, ok = das.accounts[from]
 	if !ok {
 		return nil, fmt.Errorf("account not found (publickey): %v", from)
 	}
-	_, ok = das.vouchersAddress[fromTokenAddress]
+	ok = p.hasVoucher(fromTokenAddress)
 	if !ok {
-		return nil, fmt.Errorf("voucher address %v not found", fromTokenAddress)
+		return nil, fmt.Errorf("token %v not found in the pool", fromTokenAddress)
 	}
-	p := das.pool
 
-	//check if  pool has voucher to swap  to
-	if !p.hasVoucher(toTokenAddress) {
-		return nil, fmt.Errorf("Voucher with address: %v not found in the pool", toTokenAddress)
+	ok = p.hasVoucher(toTokenAddress)
+	if !ok {
+		return nil, fmt.Errorf("token %v not found in the pool", toTokenAddress)
 	}
 
 	return &models.PoolSwapResult{TrackingId: uid.String()}, nil
@@ -787,47 +809,64 @@ func (das *DevAccountService) RequestAlias(ctx context.Context, publicKey string
 
 func (das *DevAccountService) FetchTopPools(ctx context.Context) ([]dataserviceapi.PoolDetails, error) {
 	var topPools []dataserviceapi.PoolDetails
-
-	pool := dataserviceapi.PoolDetails{
-		PoolName:            das.pool.Name,
-		PoolSymbol:          das.pool.Symbol,
-		PoolContractAdrress: das.pool.Address,
+	for _, p := range das.pools {
+		topPools = append(topPools, dataserviceapi.PoolDetails{
+			PoolName:            p.Name,
+			PoolSymbol:          p.Symbol,
+			PoolContractAdrress: p.Address,
+		})
 	}
-
-	// Add the citypool as the main pool
-	topPools = append(topPools, pool)
-
 	return topPools, nil
 }
 
 func (das *DevAccountService) GetPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
 	var swapFromList []dataserviceapi.TokenHoldings
 
-	for _, voucher := range das.pool.Vouchers {
+	p, ok := das.pools[poolAddress]
+	if !ok {
+		return nil, fmt.Errorf("Invalid pool address: %v", poolAddress)
+	}
+	for _, v := range p.Vouchers {
 		swapFromList = append(swapFromList, dataserviceapi.TokenHoldings{
+			ContractAddress: v.Address,
+			TokenSymbol:     v.Symbol,
+			TokenDecimals:   string(defaultDecimals),
+			Balance:         fmt.Sprintf("%f", defaultVoucherBalance),
+		})
+	}
+
+	return swapFromList, nil
+}
+
+func (das *DevAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+	var swapToList []dataserviceapi.TokenHoldings
+	_, ok := das.pools[poolAddress]
+	if !ok {
+		return nil, fmt.Errorf("Invalid pool address: %v", poolAddress)
+	}
+	for _, voucher := range das.vouchers {
+		swapToList = append(swapToList, dataserviceapi.TokenHoldings{
 			ContractAddress: voucher.Address,
 			TokenSymbol:     voucher.Symbol,
 			TokenDecimals:   string(defaultDecimals),
 			Balance:         fmt.Sprintf("%f", defaultVoucherBalance),
 		})
 	}
-	return swapFromList, nil
-}
-
-func (das *DevAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
-	swapToList := []dataserviceapi.TokenHoldings{
-		{
-			ContractAddress: "0x765DE816845861e75A25fCA122bb6898B8B1282a",
-			TokenSymbol:     "cUSD",
-			TokenDecimals:   "18",
-			Balance:         "",
-		},
-	}
 	return swapToList, nil
 }
 
 func (das *DevAccountService) GetSwapFromTokenMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.MaxLimitResult, error) {
+
+	p, ok := das.pools[poolAddress]
+	if !ok {
+		return nil, fmt.Errorf("Pool address: %v not found ", poolAddress)
+	}
+	limit, ok := p.PoolLimit[fromTokenAddress]
+	if !ok {
+		return nil, fmt.Errorf("Token address: %v not found in the pool", fromTokenAddress)
+	}
+
 	return &models.MaxLimitResult{
-		Max: "1339482",
+		Max: limit,
 	}, nil
 }
