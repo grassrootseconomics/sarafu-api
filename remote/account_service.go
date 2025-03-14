@@ -17,4 +17,11 @@ type AccountService interface {
 	TokenTransfer(ctx context.Context, amount, from, to, tokenAddress string) (*models.TokenTransferResponse, error)
 	CheckAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error)
 	RequestAlias(ctx context.Context, hint string, publicKey string) (*models.RequestAliasResult, error)
+	PoolDeposit(ctx context.Context, amount, from, poolAddress, tokenAddress string) (*models.PoolDepositResult, error)
+	FetchTopPools(ctx context.Context) ([]dataserviceapi.PoolDetails, error)
+	GetPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error)
+	GetPoolSwappableVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error)
+	GetPoolSwapQuote(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapQuoteResult, error)
+	PoolSwap(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapResult, error)
+	GetSwapFromTokenMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.MaxLimitResult, error)
 }

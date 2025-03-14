@@ -1,0 +1,32 @@
+{
+    "ok": true,
+    "description": "Swap from list",
+    "result": {
+        "filtered": [
+            {
+                "contractAddress": "0xc7B78Ac9ACB9E025C8234621FC515bC58179dEAe",
+                "tokenSymbol": "AMANI",
+                "tokenDecimals": "6",
+                "balance": ""
+            },
+            {
+                "contractAddress": "0xF0C3C7581b8b96B59a97daEc8Bd48247cE078674",
+                "tokenSymbol": "AMUA",
+                "tokenDecimals": "6",
+                "balance": ""
+            },
+            {
+                "contractAddress": "0x371455a30fc62736145Bd8429Fcc6481186f235F",
+                "tokenSymbol": "BAHARI",
+                "tokenDecimals": "6",
+                "balance": ""
+            },
+            {
+                "contractAddress": "0x7cA6113b59c24a880F382C7E12d609a6Eb05246b",
+                "tokenSymbol": "BANGLA",
+                "tokenDecimals": "6",
+                "balance": ""
+            }
+        ]
+    }
+}

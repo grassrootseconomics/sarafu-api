@@ -263,6 +263,106 @@ func resolveAliasAddress(ctx context.Context, alias string) (*models.AliasAddres
 	return &models.AliasAddress{Address: aliasEnsResult.Address}, err
 }
 
+func (as *HTTPAccountService) FetchTopPools(ctx context.Context) ([]dataserviceapi.PoolDetails, error) {
+	svc := dev.NewDevAccountService(ctx, as.SS)
+	return svc.FetchTopPools(ctx)
+}
+
+func (as *HTTPAccountService) PoolDeposit(ctx context.Context, amount, from, poolAddress, tokenAddress string) (*models.PoolDepositResult, error) {
+	var r models.PoolDepositResult
+
+	//pool deposit payload
+	payload := map[string]string{
+		"amount":       amount,
+		"from":         from,
+		"poolAddress":  poolAddress,
+		"tokenAddress": tokenAddress,
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("POST", config.TokenTransferURL, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+	return &r, nil
+}
+
+func (as *HTTPAccountService) GetPoolSwapQuote(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapQuoteResult, error) {
+	var r models.PoolSwapQuoteResult
+
+	//pool swap quote payload
+	payload := map[string]string{
+		"amount":           amount,
+		"from":             from,
+		"fromTokenAddress": fromTokenAddress,
+		"poolAddress":      poolAddress,
+		"toTokenAddress":   toTokenAddress,
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("POST", config.PoolSwapQuoteURL, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+	return &r, nil
+}
+
+func (as *HTTPAccountService) GetPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+	svc := dev.NewDevAccountService(ctx, as.SS)
+	return svc.GetPoolSwappableFromVouchers(ctx, poolAddress, publicKey)
+}
+
+func (as *HTTPAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+	svc := dev.NewDevAccountService(ctx, as.SS)
+	return svc.GetPoolSwappableVouchers(ctx, poolAddress, publicKey)
+}
+
+func (as *HTTPAccountService) PoolSwap(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapResult, error) {
+	var r models.PoolSwapResult
+
+	//swap payload
+	payload := map[string]string{
+		"amount":           amount,
+		"from":             from,
+		"fromTokenAddress": fromTokenAddress,
+		"poolAddress":      poolAddress,
+		"toTokenAddress":   toTokenAddress,
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("POST", config.PoolSwapQuoteURL, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+	return &r, nil
+}
+
+func (as *HTTPAccountService) GetSwapFromTokenMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.MaxLimitResult, error) {
+	svc := dev.NewDevAccountService(ctx, as.SS)
+	return svc.GetSwapFromTokenMaxLimit(ctx, poolAddress, fromTokenAddress, toTokenAddress, publicKey)
+}
+
 func (as *HTTPAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
 	if as.SS == nil {
 		return nil, fmt.Errorf("The storage service cannot be nil")

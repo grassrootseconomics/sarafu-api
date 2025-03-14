@@ -57,3 +57,38 @@ func (m MockAccountService) RequestAlias(ctx context.Context, publicKey string, 
 	args := m.Called(publicKey, hint)
 	return args.Get(0).(*models.RequestAliasResult), args.Error(1)
 }
+
+func (m MockAccountService) PoolDeposit(ctx context.Context, amount, from, poolAddress, tokenAddress string) (*models.PoolDepositResult, error) {
+	args := m.Called(amount, from, poolAddress, tokenAddress)
+	return args.Get(0).(*models.PoolDepositResult), args.Error(1)
+}
+
+func (m MockAccountService) FetchTopPools(ctx context.Context) ([]dataserviceapi.PoolDetails, error) {
+	args := m.Called()
+	return args.Get(0).([]dataserviceapi.PoolDetails), args.Error(1)
+}
+
+func (m MockAccountService) GetPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+	args := m.Called(poolAddress, publicKey)
+	return args.Get(0).([]dataserviceapi.TokenHoldings), args.Error(1)
+}
+
+func (m MockAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+	args := m.Called(poolAddress, publicKey)
+	return args.Get(0).([]dataserviceapi.TokenHoldings), args.Error(1)
+}
+
+func (m MockAccountService) GetPoolSwapQuote(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapQuoteResult, error) {
+	args := m.Called(amount, from, fromTokenAddress, poolAddress, toTokenAddress)
+	return args.Get(0).(*models.PoolSwapQuoteResult), args.Error(1)
+}
+
+func (m MockAccountService) PoolSwap(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapResult, error) {
+	args := m.Called(amount, from, fromTokenAddress, poolAddress, toTokenAddress)
+	return args.Get(0).(*models.PoolSwapResult), args.Error(1)
+}
+
+func (m MockAccountService) GetSwapFromTokenMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.MaxLimitResult, error) {
+	args := m.Called(poolAddress, fromTokenAddress, toTokenAddress, publicKey)
+	return args.Get(0).(*models.MaxLimitResult), args.Error(1)
+}

@@ -57,10 +57,38 @@ func (tas *TestAccountService) TokenTransfer(ctx context.Context, amount, from, 
 	}, nil
 }
 
+func (m TestAccountService) PoolDeposit(ctx context.Context, amount, from, poolAddress, tokenAddress string) (*models.PoolDepositResult, error) {
+	return &models.PoolDepositResult{}, nil
+}
+
 func (m TestAccountService) CheckAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error) {
 	return &models.AliasAddress{}, nil
 }
 
 func (m TestAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
 	return &models.RequestAliasResult{}, nil
+}
+
+func (m TestAccountService) FetchTopPools(ctx context.Context) ([]dataserviceapi.PoolDetails, error) {
+	return []dataserviceapi.PoolDetails{}, nil
+}
+
+func (m TestAccountService) GetPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+	return []dataserviceapi.TokenHoldings{}, nil
+}
+
+func (m TestAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+	return []dataserviceapi.TokenHoldings{}, nil
+}
+
+func (m TestAccountService) GetPoolSwapQuote(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapQuoteResult, error) {
+	return &models.PoolSwapQuoteResult{}, nil
+}
+
+func (m TestAccountService) PoolSwap(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapResult, error) {
+	return &models.PoolSwapResult{}, nil
+}
+
+func (m TestAccountService) GetSwapFromTokenMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.MaxLimitResult, error) {
+	return &models.MaxLimitResult{}, nil
 }
