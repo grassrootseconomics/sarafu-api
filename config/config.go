@@ -19,6 +19,8 @@ const (
 	poolDepositPrefix          = "/api/v2/pool/deposit"
 	poolSwapQoutePrefix        = "/api/v2/pool/quote"
 	poolSwapPrefix             = "/api/v2/pool/swap"
+	topPoolsPrefix             = "/api/v1/pool/top"
+	retrievePoolDetailsPrefix  = "/api/v1/pool/reverse"
 )
 
 var (
@@ -28,18 +30,20 @@ var (
 )
 
 var (
-	CreateAccountURL    string
-	TrackStatusURL      string
-	BalanceURL          string
-	TrackURL            string
-	TokenTransferURL    string
-	VoucherHoldingsURL  string
-	VoucherTransfersURL string
-	VoucherDataURL      string
-	CheckAliasURL       string
-	PoolDepositURL      string
-	PoolSwapQuoteURL    string
-	PoolSwapURL         string
+	CreateAccountURL       string
+	TrackStatusURL         string
+	BalanceURL             string
+	TrackURL               string
+	TokenTransferURL       string
+	VoucherHoldingsURL     string
+	VoucherTransfersURL    string
+	VoucherDataURL         string
+	CheckAliasURL          string
+	PoolDepositURL         string
+	PoolSwapQuoteURL       string
+	PoolSwapURL            string
+	TopPoolsURL            string
+	RetrievePoolDetailsURL string
 )
 
 func setBase() error {
@@ -78,6 +82,8 @@ func LoadConfig() error {
 	PoolDepositURL, _ = url.JoinPath(custodialURLBase, poolDepositPrefix)
 	PoolSwapQuoteURL, _ = url.JoinPath(custodialURLBase, poolSwapQoutePrefix)
 	PoolSwapURL, _ = url.JoinPath(custodialURLBase, poolSwapPrefix)
+	TopPoolsURL, _ = url.JoinPath(dataURLBase, topPoolsPrefix)
+	RetrievePoolDetailsURL, _ = url.JoinPath(dataURLBase, retrievePoolDetailsPrefix)
 
 	return nil
 }
