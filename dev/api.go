@@ -309,16 +309,20 @@ func (das *DevAccountService) RegisterPool(ctx context.Context, name string, sm 
 	z := h.Sum(nil)
 	pooladdr := fmt.Sprintf("0x%x", z)
 
+	p := Pool{
+		Name:      name,
+		Symbol:    sm,
+		Address:   pooladdr,
+		PoolLimit: make(map[string]string),
+	}
+
 	for _, v := range das.vouchers {
 		//pre-load vouchers with vouchers when a pool is registered
 		seedVouchers = append(seedVouchers, v)
+		p.PoolLimit[v.Address] = fmt.Sprintf("%f", defaultVoucherBalance)
 	}
-	p := Pool{
-		Name:     name,
-		Symbol:   sm,
-		Address:  pooladdr,
-		Vouchers: seedVouchers,
-	}
+	p.Vouchers = append(p.Vouchers, seedVouchers...)
+
 	err := das.savePoolInfo(ctx, p)
 	if err != nil {
 		return err
@@ -509,10 +513,6 @@ func (das *DevAccountService) PoolDeposit(ctx context.Context, amount, from, poo
 		return nil, fmt.Errorf("voucher address %v found but does not resolve", tokenAddress)
 	}
 
-	// das.pool.Vouchers = append(das.pool.Vouchers, voucher)
-	// das.pool.PoolLimit = map[string]string{tokenAddress: amount}
-
-	// err = das.savePoolInfo(ctx, das.pool)
 	if err != nil {
 		return nil, err
 	}
@@ -526,15 +526,15 @@ func (das *DevAccountService) GetPoolSwapQuote(ctx context.Context, amount, from
 	if !ok {
 		return nil, fmt.Errorf("account not found (publickey): %v", from)
 	}
-	_, ok = das.pools[poolAddress]
+	p, ok := das.pools[poolAddress]
 	if !ok {
 		return nil, fmt.Errorf("pool address %v not found", poolAddress)
 	}
 
 	//resolve the token address you are trying to swap from(fromTokenAddress)
-	_, ok = das.vouchersAddress[fromTokenAddress]
+	ok = p.hasVoucher(fromTokenAddress)
 	if !ok {
-		return nil, fmt.Errorf("voucher address %v not found", fromTokenAddress)
+		return nil, fmt.Errorf("voucher with address %v not found in the pool", fromTokenAddress)
 	}
 
 	//Return a a quote that is equal to the amount entered
