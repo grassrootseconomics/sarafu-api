@@ -241,7 +241,48 @@ func resolveAliasAddress(ctx context.Context, alias string) (*models.AliasAddres
 
 func (as *HTTPAccountService) FetchTopPools(ctx context.Context) ([]dataserviceapi.PoolDetails, error) {
 	svc := dev.NewDevAccountService(ctx, as.SS)
-	return svc.FetchTopPools(ctx)
+	if as.UseApi {
+		return fetchCustodialTopPools(ctx)
+	} else {
+		return svc.FetchTopPools(ctx)
+	}
+}
+
+func fetchCustodialTopPools(ctx context.Context) ([]dataserviceapi.PoolDetails, error) {
+	var r struct {
+		TopPools []dataserviceapi.PoolDetails `json:"topPools"`
+	}
+
+	req, err := http.NewRequest("GET", config.TopPoolsURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = doRequest(ctx, req, &r)
+	return r.TopPools, nil
+}
+
+func (as *HTTPAccountService) RetrievePoolDetails(ctx context.Context, sym string) (*dataserviceapi.PoolDetails, error) {
+	if as.UseApi {
+		return retrievePoolDetails(ctx, sym)
+	} else {
+		return nil, nil
+	}
+}
+
+func retrievePoolDetails(ctx context.Context, sym string) (*dataserviceapi.PoolDetails, error) {
+	var r dataserviceapi.PoolDetails
+
+	ep, err := url.JoinPath(config.RetrievePoolDetailsURL, sym)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("GET", ep, nil)
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	return &r, nil
 }
 
 func (as *HTTPAccountService) PoolDeposit(ctx context.Context, amount, from, poolAddress, tokenAddress string) (*models.PoolDepositResult, error) {
