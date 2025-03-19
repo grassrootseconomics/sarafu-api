@@ -28,6 +28,7 @@ var (
 	custodialURLBase string
 	dataURLBase      string
 	BearerToken      string
+	aliasEnsURLBase  string
 )
 
 var (
@@ -53,6 +54,7 @@ func setBase() error {
 
 	custodialURLBase = env.GetEnv("CUSTODIAL_URL_BASE", "http://localhost:5003")
 	dataURLBase = env.GetEnv("DATA_URL_BASE", "http://localhost:5006")
+	aliasEnsURLBase = env.GetEnv("ALIAS_ENS_BASE", "http://localhost:5015")
 	BearerToken = env.GetEnv("BEARER_TOKEN", "")
 
 	_, err = url.Parse(custodialURLBase)
