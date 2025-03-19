@@ -339,13 +339,56 @@ func (as *HTTPAccountService) GetPoolSwapQuote(ctx context.Context, amount, from
 }
 
 func (as *HTTPAccountService) GetPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
-	svc := dev.NewDevAccountService(ctx, as.SS)
-	return svc.GetPoolSwappableFromVouchers(ctx, poolAddress, publicKey)
+	if as.UseApi {
+		return as.getPoolSwappableFromVouchers(ctx, poolAddress, publicKey)
+	} else {
+		svc := dev.NewDevAccountService(ctx, as.SS)
+		return svc.GetPoolSwappableFromVouchers(ctx, poolAddress, publicKey)
+	}
+
+}
+
+func (as *HTTPAccountService) getPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+	var r struct {
+		PoolSwappableVouchers []dataserviceapi.TokenHoldings `json:"filtered"`
+	}
+	ep, err := url.JoinPath(config.PoolSwappableVouchersURL, poolAddress, "from", publicKey)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("GET", ep, nil)
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+
+	return r.PoolSwappableVouchers, nil
 }
 
 func (as *HTTPAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
 	svc := dev.NewDevAccountService(ctx, as.SS)
-	return svc.GetPoolSwappableVouchers(ctx, poolAddress, publicKey)
+	if as.UseApi {
+		return as.getPoolSwappableFromVouchers(ctx, poolAddress, publicKey)
+	} else {
+		return svc.GetPoolSwappableVouchers(ctx, poolAddress, publicKey)
+	}
+}
+
+func (as HTTPAccountService) getPoolSwappableVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+	var r struct {
+		PoolSwappableVouchers []dataserviceapi.TokenHoldings `json:"filtered"`
+	}
+
+	ep, err := url.JoinPath(config.PoolSwappableVouchersURL, poolAddress, "to", publicKey)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("GET", ep, nil)
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	return r.PoolSwappableVouchers, nil
 }
 
 func (as *HTTPAccountService) PoolSwap(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapResult, error) {
@@ -376,8 +419,30 @@ func (as *HTTPAccountService) PoolSwap(ctx context.Context, amount, from, fromTo
 }
 
 func (as *HTTPAccountService) GetSwapFromTokenMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.MaxLimitResult, error) {
-	svc := dev.NewDevAccountService(ctx, as.SS)
-	return svc.GetSwapFromTokenMaxLimit(ctx, poolAddress, fromTokenAddress, toTokenAddress, publicKey)
+	if as.UseApi {
+		return as.getSwapFromTokenMaxLimit(ctx, poolAddress, fromTokenAddress, toTokenAddress, publicKey)
+	} else {
+		svc := dev.NewDevAccountService(ctx, as.SS)
+		return svc.GetSwapFromTokenMaxLimit(ctx, poolAddress, fromTokenAddress, toTokenAddress, publicKey)
+	}
+}
+
+func (as *HTTPAccountService) getSwapFromTokenMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokeAddress, publicKey string) (*models.MaxLimitResult, error) {
+	var r struct {
+		MaxPoolLimitResult models.MaxLimitResult `json:"max"`
+	}
+
+	ep, err := url.JoinPath(config.PoolSwappableVouchersURL, poolAddress, "limit", fromTokenAddress, toTokeAddress, publicKey)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("GET", ep, nil)
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+
+	return &r.MaxPoolLimitResult, nil
 }
 
 // TODO: Use actual custodial api to request available alias
