@@ -22,6 +22,7 @@ const (
 	topPoolsPrefix              = "/api/v1/pool/top"
 	retrievePoolDetailsPrefix   = "/api/v1/pool/reverse"
 	poolSwappableVouchersPrefix = "/api/v1/pool"
+	AliasEnsPrefix             = "/api/v1/bypass"
 )
 
 var (
@@ -47,6 +48,7 @@ var (
 	TopPoolsURL              string
 	RetrievePoolDetailsURL   string
 	PoolSwappableVouchersURL string
+	AliasEnsURL         string
 )
 
 func setBase() error {
@@ -90,5 +92,6 @@ func LoadConfig() error {
 	RetrievePoolDetailsURL, _ = url.JoinPath(dataURLBase, retrievePoolDetailsPrefix)
 	PoolSwappableVouchersURL, _ = url.JoinPath(dataURLBase, poolSwappableVouchersPrefix)
 
+	AliasEnsURL, _ = url.JoinPath(aliasEnsURLBase, AliasEnsPrefix)
 	return nil
 }
