@@ -11,7 +11,9 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 
+	"git.defalsify.org/vise.git/logging"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/config"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/dev"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
@@ -22,6 +24,7 @@ import (
 
 var (
 	aliasRegex = regexp.MustCompile("^\\+?[a-zA-Z0-9\\-_]+$")
+	logg       = logging.NewVanilla().WithDomain("sarafu-api.devapi")
 )
 
 type HTTPAccountService struct {
@@ -57,6 +60,10 @@ func (as *HTTPAccountService) TrackAccountStatus(ctx context.Context, publicKey 
 	}
 
 	return &r, nil
+}
+
+func (as *HTTPAccountService) ToFqdn(alias string) string {
+	return alias + ".sarafu.eth"
 }
 
 // CheckBalance retrieves the balance for a given public key from the custodial balance API endpoint.
@@ -216,8 +223,10 @@ func (as *HTTPAccountService) CheckAliasAddress(ctx context.Context, alias strin
 	if as.SS == nil {
 		return nil, fmt.Errorf("The storage service cannot be nil")
 	}
+	logg.InfoCtxf(ctx, "resolving alias before formatting", "alias", alias)
 	svc := dev.NewDevAccountService(ctx, as.SS)
 	if as.UseApi {
+		logg.InfoCtxf(ctx, "resolving alias to address", "alias", alias)
 		return resolveAliasAddress(ctx, alias)
 	} else {
 		return svc.CheckAliasAddress(ctx, alias)
@@ -225,27 +234,83 @@ func (as *HTTPAccountService) CheckAliasAddress(ctx context.Context, alias strin
 }
 
 func resolveAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error) {
-	var r models.AliasAddress
+	var (
+		aliasEnsResult models.AliasEnsAddressResult
+	)
 
-	ep, err := url.JoinPath(config.CheckAliasURL, alias)
+	ep, err := url.JoinPath(config.AliasEnsURL, "/resolve")
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("GET", ep, nil)
+
+	u, err := url.Parse(ep)
 	if err != nil {
 		return nil, err
 	}
-	_, err = doRequest(ctx, req, &r)
-	return &r, err
+
+	query := u.Query()
+	query.Set("name", alias)
+	u.RawQuery = query.Encode()
+
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &aliasEnsResult)
+	if err != nil {
+		return nil, err
+	}
+	return &models.AliasAddress{Address: aliasEnsResult.Address}, err
 }
 
-// TODO: Use actual custodial api to request available alias
 func (as *HTTPAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
 	if as.SS == nil {
 		return nil, fmt.Errorf("The storage service cannot be nil")
 	}
-	svc := dev.NewDevAccountService(ctx, as.SS)
-	return svc.RequestAlias(ctx, publicKey, hint)
+	if as.UseApi {
+		if !strings.Contains(hint, ".") {
+			hint = as.ToFqdn(hint)
+		}
+		enr, err := requestEnsAlias(ctx, publicKey, hint)
+		if err != nil {
+			return nil, err
+		}
+		return &models.RequestAliasResult{Alias: enr.Name}, nil
+	} else {
+		svc := dev.NewDevAccountService(ctx, as.SS)
+		return svc.RequestAlias(ctx, publicKey, hint)
+	}
+}
+
+func requestEnsAlias(ctx context.Context, publicKey string, hint string) (*models.AliasEnsResult, error) {
+	var r models.AliasEnsResult
+
+	ep, err := url.JoinPath(config.AliasEnsURL, "/register")
+	if err != nil {
+		return nil, err
+	}
+	logg.InfoCtxf(ctx, "requesting alias", "endpoint", ep, "hint", hint)
+	//Payload with the address and hint to derive an ENS name
+	payload := map[string]string{
+		"address": publicKey,
+		"hint":    hint,
+	}
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("POST", ep, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return nil, err
+	}
+	// Log the request body
+	logg.InfoCtxf(ctx, "request body", "payload", string(payloadBytes))
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+	logg.InfoCtxf(ctx, "alias successfully assigned", "alias", r.Name)
+	return &r, nil
 }
 
 // SendSMS calls the API to send out an SMS.
