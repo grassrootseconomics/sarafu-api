@@ -317,7 +317,7 @@ func requestEnsAlias(ctx context.Context, publicKey string, hint string) (*model
 // Parameters:
 //   - inviterPhone: The user initiating the SMS.
 //   - inviteePhone: The number being invited to Sarafu.
-func (as *HTTPAccountService) SendSMS(ctx context.Context, inviterPhone, inviteePhone string) (*models.SendSMSResponse, error) {
+func (as *HTTPAccountService) SendUpsellSMS(ctx context.Context, inviterPhone, inviteePhone string) (*models.SendSMSResponse, error) {
 	var r models.SendSMSResponse
 
 	// Create request payload
