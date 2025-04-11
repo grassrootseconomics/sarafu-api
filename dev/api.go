@@ -653,3 +653,10 @@ func (das *DevAccountService) RequestAlias(ctx context.Context, publicKey string
 		Alias: alias,
 	}, nil
 }
+
+func (das *DevAccountService) SendUpsellSMS(ctx context.Context, inviterPhone, inviteePhone string) (*models.SendSMSResponse, error) {
+	logg.DebugCtxf(ctx, "sent an SMS", "inviterPhone", inviterPhone, "inviteePhone", inviteePhone)
+	return &models.SendSMSResponse{
+		Invitee: inviteePhone,
+	}, nil
+}

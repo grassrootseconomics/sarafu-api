@@ -313,6 +313,37 @@ func requestEnsAlias(ctx context.Context, publicKey string, hint string) (*model
 	return &r, nil
 }
 
+// SendSMS calls the API to send out an SMS.
+// Parameters:
+//   - inviterPhone: The user initiating the SMS.
+//   - inviteePhone: The number being invited to Sarafu.
+func (as *HTTPAccountService) SendUpsellSMS(ctx context.Context, inviterPhone, inviteePhone string) (*models.SendSMSResponse, error) {
+	var r models.SendSMSResponse
+
+	// Create request payload
+	payload := map[string]string{
+		"inviterPhone": inviterPhone,
+		"inviteePhone": inviteePhone,
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a new request
+	req, err := http.NewRequest("POST", config.SendSMSURL, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+
+	return &r, nil
+}
+
 // TODO: remove eth-custodial api dependency
 func doRequest(ctx context.Context, req *http.Request, rcpt any) (*api.OKResponse, error) {
 	var okResponse api.OKResponse

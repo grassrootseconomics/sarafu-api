@@ -16,6 +16,7 @@ const (
 	voucherTransfersPathPrefix = "/api/v1/transfers/last10"
 	voucherDataPathPrefix      = "/api/v1/token"
 	AliasPrefix                = "api/v1/alias"
+	SendSMSPrefix              = "api/v1/external/upsell"
 	AliasEnsPrefix             = "/api/v1/bypass"
 )
 
@@ -36,6 +37,7 @@ var (
 	VoucherTransfersURL string
 	VoucherDataURL      string
 	CheckAliasURL       string
+	SendSMSURL          string
 	AliasEnsURL         string
 )
 
@@ -73,6 +75,7 @@ func LoadConfig() error {
 	VoucherTransfersURL, _ = url.JoinPath(dataURLBase, voucherTransfersPathPrefix)
 	VoucherDataURL, _ = url.JoinPath(dataURLBase, voucherDataPathPrefix)
 	CheckAliasURL, _ = url.JoinPath(dataURLBase, AliasPrefix)
+	SendSMSURL, _ = url.JoinPath(dataURLBase, SendSMSPrefix)
 	AliasEnsURL, _ = url.JoinPath(aliasEnsURLBase, AliasEnsPrefix)
 	return nil
 }

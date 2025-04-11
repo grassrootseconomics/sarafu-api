@@ -61,3 +61,7 @@ func (m MockApi) RequestAlias(ctx context.Context, publicKey string, hint string
 func (m MockApi) TokenTransfer(ctx context.Context, amount, from, to, tokenAddress string) (*models.TokenTransferResponse, error) {
 	return nil, nil
 }
+
+func (m MockApi) SendUpsellSMS(ctx context.Context, inviterPhone, inviteePhone string) (*models.SendSMSResponse, error) {
+	return nil, nil
+}
