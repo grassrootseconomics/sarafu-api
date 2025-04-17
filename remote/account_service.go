@@ -18,4 +18,6 @@ type AccountService interface {
 	CheckAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error)
 	RequestAlias(ctx context.Context, hint string, publicKey string) (*models.RequestAliasResult, error)
 	SendUpsellSMS(ctx context.Context, inviterPhone, inviteePhone string) (*models.SendSMSResponse, error)
+	SendAddressSMS(ctx context.Context, publicKey, originPhone string)
+	SendPINResetSMS(ctx context.Context, admin, phone string)
 }
