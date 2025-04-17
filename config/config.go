@@ -18,6 +18,7 @@ const (
 	AliasPrefix                = "api/v1/alias"
 	SendSMSPrefix              = "api/v1/external/upsell"
 	AliasEnsPrefix             = "/api/v1/bypass"
+	ExtraSMSPrefix             = "/api/v1/external"
 )
 
 var (
@@ -25,6 +26,7 @@ var (
 	dataURLBase      string
 	BearerToken      string
 	aliasEnsURLBase  string
+	extraSMSBase     string
 )
 
 var (
@@ -39,6 +41,7 @@ var (
 	CheckAliasURL       string
 	SendSMSURL          string
 	AliasEnsURL         string
+	ExtraSMSURL         string
 )
 
 func setBase() error {
@@ -47,6 +50,7 @@ func setBase() error {
 	custodialURLBase = env.GetEnv("CUSTODIAL_URL_BASE", "http://localhost:5003")
 	dataURLBase = env.GetEnv("DATA_URL_BASE", "http://localhost:5006")
 	aliasEnsURLBase = env.GetEnv("ALIAS_ENS_BASE", "http://localhost:5015")
+	extraSMSBase = env.GetEnv("EXTRA_SMS__BASE", "http://localhost:5035")
 	BearerToken = env.GetEnv("BEARER_TOKEN", "")
 
 	_, err = url.Parse(custodialURLBase)
@@ -77,5 +81,7 @@ func LoadConfig() error {
 	CheckAliasURL, _ = url.JoinPath(dataURLBase, AliasPrefix)
 	SendSMSURL, _ = url.JoinPath(dataURLBase, SendSMSPrefix)
 	AliasEnsURL, _ = url.JoinPath(aliasEnsURLBase, AliasEnsPrefix)
+	ExtraSMSURL, _ = url.JoinPath(extraSMSBase, ExtraSMSPrefix)
+
 	return nil
 }
