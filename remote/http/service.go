@@ -344,6 +344,56 @@ func (as *HTTPAccountService) SendUpsellSMS(ctx context.Context, inviterPhone, i
 	return &r, nil
 }
 
+func (as *HTTPAccountService) SendAddressSMS(ctx context.Context, publicKey, originPhone string) error {
+	ep, err := url.JoinPath(config.ExternalSMSURL, "address")
+	if err != nil {
+		return err
+	}
+	logg.InfoCtxf(ctx, "sending an address sms", "endpoint", ep, "address", publicKey, "origin-phone", originPhone)
+	payload := map[string]string{
+		"address":     publicKey,
+		"originPhone": originPhone,
+	}
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest("POST", ep, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return err
+	}
+	_, err = doRequest(ctx, req, nil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (as *HTTPAccountService) SendPINResetSMS(ctx context.Context, admin, phone string) error {
+	ep, err := url.JoinPath(config.ExternalSMSURL, "pinreset")
+	if err != nil {
+		return err
+	}
+	logg.InfoCtxf(ctx, "sending pin reset sms", "endpoint", ep, "admin", admin, "phone", phone)
+	payload := map[string]string{
+		"admin": admin,
+		"phone": phone,
+	}
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest("POST", ep, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return err
+	}
+	_, err = doRequest(ctx, req, nil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // TODO: remove eth-custodial api dependency
 func doRequest(ctx context.Context, req *http.Request, rcpt any) (*api.OKResponse, error) {
 	var okResponse api.OKResponse

@@ -660,3 +660,11 @@ func (das *DevAccountService) SendUpsellSMS(ctx context.Context, inviterPhone, i
 		Invitee: inviteePhone,
 	}, nil
 }
+
+func (das *DevAccountService) SendPINResetSMS(ctx context.Context, admin, phone string) error {
+	return fmt.Errorf("unimplemented")
+}
+
+func (das *DevAccountService) SendAddressSMS(ctx context.Context, publicKey, originPhone string) error {
+	return fmt.Errorf("unimplemented")
+}
