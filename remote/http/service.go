@@ -345,7 +345,7 @@ func (as *HTTPAccountService) SendUpsellSMS(ctx context.Context, inviterPhone, i
 }
 
 func (as *HTTPAccountService) SendAddressSMS(ctx context.Context, publicKey, originPhone string) error {
-	ep, err := url.JoinPath(config.ExtraSMSURL, "address")
+	ep, err := url.JoinPath(config.ExternalSMSURL, "address")
 	if err != nil {
 		return err
 	}
@@ -370,7 +370,7 @@ func (as *HTTPAccountService) SendAddressSMS(ctx context.Context, publicKey, ori
 }
 
 func (as *HTTPAccountService) SendPINResetSMS(ctx context.Context, admin, phone string) error {
-	ep, err := url.JoinPath(config.ExtraSMSURL, "pinreset")
+	ep, err := url.JoinPath(config.ExternalSMSURL, "pinreset")
 	if err != nil {
 		return err
 	}
