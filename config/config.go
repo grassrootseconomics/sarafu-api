@@ -51,7 +51,7 @@ func setBase() error {
 	dataURLBase = env.GetEnv("DATA_URL_BASE", "http://localhost:5006")
 	aliasEnsURLBase = env.GetEnv("ALIAS_ENS_BASE", "http://localhost:5015")
 	externalSMSBase = env.GetEnv("EXTRA_SMS__BASE", "http://localhost:5035")
-	BearerToken = env.GetEnv("BEARER_TOKEN", "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJwdWJsaWNLZXkiOiIweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAiLCJzZXJ2aWNlIjp0cnVlLCJpc3MiOiJldGgtY3VzdG9kaWFsLTYzMDFkZjgiLCJzdWIiOiJhbGZham9yZXMtdGVzdCIsImV4cCI6MTc2Mjk0OTY5OCwiaWF0IjoxNzMxNDEzNjk4fQ.K5COKDKPKA8KwaA-jWFUJEPdS767pXlZhl1MX7pEzFplLYWIkr_w1oOz7bvOSxTWnOLpaaCOMTzBSiobnNdKCw")
+	BearerToken = env.GetEnv("BEARER_TOKEN", "")
 
 	_, err = url.Parse(custodialURLBase)
 	if err != nil {
