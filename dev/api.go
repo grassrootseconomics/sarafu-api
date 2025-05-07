@@ -12,13 +12,13 @@ import (
 	"strings"
 	"time"
 
-	"git.defalsify.org/vise.git/db"
-	"git.defalsify.org/vise.git/logging"
 	"git.grassecon.net/grassrootseconomics/common/phone"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/event"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
 	"git.grassecon.net/grassrootseconomics/visedriver/storage"
 	"github.com/gofrs/uuid"
+	"github.com/grassrootseconomics/go-vise/db"
+	"github.com/grassrootseconomics/go-vise/logging"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
 

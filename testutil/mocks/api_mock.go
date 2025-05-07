@@ -3,8 +3,8 @@ package mocks
 import (
 	"context"
 
-	"git.defalsify.org/vise.git/logging"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
+	"github.com/grassrootseconomics/go-vise/logging"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
 

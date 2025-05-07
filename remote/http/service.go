@@ -13,12 +13,12 @@ import (
 	"regexp"
 	"strings"
 
-	"git.defalsify.org/vise.git/logging"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/config"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/dev"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
 	"git.grassecon.net/grassrootseconomics/visedriver/storage"
 	"github.com/grassrootseconomics/eth-custodial/pkg/api"
+	"github.com/grassrootseconomics/go-vise/logging"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
 
