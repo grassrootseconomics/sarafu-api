@@ -20,6 +20,8 @@ github.com/grassrootseconomics/eth-custodial v1.3.0-beta h1:twrMBhl89GqDUL9PlkzQ
 github.com/grassrootseconomics/eth-custodial v1.3.0-beta/go.mod h1:7uhRcdnJplX4t6GKCEFkbeDhhjlcaGJeJqevbcvGLZo=
 github.com/grassrootseconomics/go-vise v0.4.1 h1:g26jvYnsWaTns60ZHdltGcsL9cjWqvYZwUZ2FWVKOGo=
 github.com/grassrootseconomics/go-vise v0.4.1/go.mod h1:tt3/Swp9F9PdhSDBDvwuI1GZRrCg32kWXWzyATIpTO4=
+github.com/grassrootseconomics/go-vise v0.4.2 h1:6c6ncOCvvXOGWBtMRhuDDLvhsUb+wn11zW6NuCmlFXY=
+github.com/grassrootseconomics/go-vise v0.4.2/go.mod h1:tt3/Swp9F9PdhSDBDvwuI1GZRrCg32kWXWzyATIpTO4=
 github.com/grassrootseconomics/ussd-data-service v1.2.0-beta h1:fn1gwbWIwHVEBtUC2zi5OqTlfI/5gU1SMk0fgGixIXk=
 github.com/grassrootseconomics/ussd-data-service v1.2.0-beta/go.mod h1:omfI0QtUwIdpu9gMcUqLMCG8O1XWjqJGBx1qUMiGWC0=
 github.com/graygnuorg/go-gdbm v0.0.0-20220711140707-71387d66dce4 h1:U4kkNYryi/qfbBF8gh7Vsbuz+cVmhf5kt6pE9bYYyLo=
