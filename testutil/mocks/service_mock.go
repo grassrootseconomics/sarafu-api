@@ -53,9 +53,22 @@ func (m *MockAccountService) CheckAliasAddress(ctx context.Context, alias string
 	return args.Get(0).(*models.AliasAddress), args.Error(1)
 }
 
-func (m MockAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
+func (m *MockAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
 	args := m.Called(publicKey, hint)
 	return args.Get(0).(*models.RequestAliasResult), args.Error(1)
+}
+
+func (m *MockAccountService) SendUpsellSMS(ctx context.Context, inviterPhone, inviteePhone string) (*models.SendSMSResponse, error) {
+	args := m.Called(inviterPhone, inviteePhone)
+	return args.Get(0).(*models.SendSMSResponse), args.Error(1)
+}
+
+func (m *MockAccountService) SendPINResetSMS(ctx context.Context, admin, phone string) error {
+	return nil
+}
+
+func (m *MockAccountService) SendAddressSMS(ctx context.Context, publicKey, originPhone string) error {
+	return nil
 }
 
 func (m MockAccountService) PoolDeposit(ctx context.Context, amount, from, poolAddress, tokenAddress string) (*models.PoolDepositResult, error) {

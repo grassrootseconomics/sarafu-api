@@ -17,6 +17,9 @@ type AccountService interface {
 	TokenTransfer(ctx context.Context, amount, from, to, tokenAddress string) (*models.TokenTransferResponse, error)
 	CheckAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error)
 	RequestAlias(ctx context.Context, hint string, publicKey string) (*models.RequestAliasResult, error)
+	SendUpsellSMS(ctx context.Context, inviterPhone, inviteePhone string) (*models.SendSMSResponse, error)
+	SendAddressSMS(ctx context.Context, publicKey, originPhone string) error
+	SendPINResetSMS(ctx context.Context, admin, phone string) error
 	PoolDeposit(ctx context.Context, amount, from, poolAddress, tokenAddress string) (*models.PoolDepositResult, error)
 	FetchTopPools(ctx context.Context) ([]dataserviceapi.PoolDetails, error)
 	GetPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error)

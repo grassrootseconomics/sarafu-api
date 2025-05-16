@@ -806,6 +806,21 @@ func (das *DevAccountService) RequestAlias(ctx context.Context, publicKey string
 	}, nil
 }
 
+func (das *DevAccountService) SendUpsellSMS(ctx context.Context, inviterPhone, inviteePhone string) (*models.SendSMSResponse, error) {
+	logg.DebugCtxf(ctx, "sent an SMS", "inviterPhone", inviterPhone, "inviteePhone", inviteePhone)
+	return &models.SendSMSResponse{
+		Invitee: inviteePhone,
+	}, nil
+}
+
+func (das *DevAccountService) SendPINResetSMS(ctx context.Context, admin, phone string) error {
+	return fmt.Errorf("unimplemented")
+}
+
+func (das *DevAccountService) SendAddressSMS(ctx context.Context, publicKey, originPhone string) error {
+	return fmt.Errorf("unimplemented")
+}
+
 func (das *DevAccountService) FetchTopPools(ctx context.Context) ([]dataserviceapi.PoolDetails, error) {
 	var topPools []dataserviceapi.PoolDetails
 	for _, p := range das.pools {

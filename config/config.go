@@ -16,6 +16,7 @@ const (
 	voucherTransfersPathPrefix = "/api/v1/transfers/last10"
 	voucherDataPathPrefix      = "/api/v1/token"
 	aliasPrefix                = "api/v1/alias"
+	SendSMSPrefix              = "api/v1/external/upsell"
 	poolDepositPrefix          = "/api/v2/pool/deposit"
 	poolSwapQoutePrefix        = "/api/v2/pool/quote"
 	poolSwapPrefix             = "/api/v2/pool/swap"
@@ -23,6 +24,7 @@ const (
 	retrievePoolDetailsPrefix   = "/api/v1/pool/reverse"
 	poolSwappableVouchersPrefix = "/api/v1/pool"
 	AliasEnsPrefix             = "/api/v1/bypass"
+	ExternalSMSPrefix          = "/api/v1/external"
 )
 
 var (
@@ -30,6 +32,7 @@ var (
 	dataURLBase      string
 	BearerToken      string
 	aliasEnsURLBase  string
+	externalSMSBase  string
 )
 
 var (
@@ -48,7 +51,9 @@ var (
 	TopPoolsURL              string
 	RetrievePoolDetailsURL   string
 	PoolSwappableVouchersURL string
+	SendSMSURL          string
 	AliasEnsURL         string
+	ExternalSMSURL      string
 )
 
 func setBase() error {
@@ -57,6 +62,7 @@ func setBase() error {
 	custodialURLBase = env.GetEnv("CUSTODIAL_URL_BASE", "http://localhost:5003")
 	dataURLBase = env.GetEnv("DATA_URL_BASE", "http://localhost:5006")
 	aliasEnsURLBase = env.GetEnv("ALIAS_ENS_BASE", "http://localhost:5015")
+	externalSMSBase = env.GetEnv("EXTERNAL_SMS_BASE", "http://localhost:5035")
 	BearerToken = env.GetEnv("BEARER_TOKEN", "")
 
 	_, err = url.Parse(custodialURLBase)
@@ -85,6 +91,7 @@ func LoadConfig() error {
 	VoucherTransfersURL, _ = url.JoinPath(dataURLBase, voucherTransfersPathPrefix)
 	VoucherDataURL, _ = url.JoinPath(dataURLBase, voucherDataPathPrefix)
 	CheckAliasURL, _ = url.JoinPath(dataURLBase, aliasPrefix)
+	SendSMSURL, _ = url.JoinPath(dataURLBase, SendSMSPrefix)
 	PoolDepositURL, _ = url.JoinPath(custodialURLBase, poolDepositPrefix)
 	PoolSwapQuoteURL, _ = url.JoinPath(custodialURLBase, poolSwapQoutePrefix)
 	PoolSwapURL, _ = url.JoinPath(custodialURLBase, poolSwapPrefix)
@@ -93,5 +100,7 @@ func LoadConfig() error {
 	PoolSwappableVouchersURL, _ = url.JoinPath(dataURLBase, poolSwappableVouchersPrefix)
 
 	AliasEnsURL, _ = url.JoinPath(aliasEnsURLBase, AliasEnsPrefix)
+	ExternalSMSURL, _ = url.JoinPath(externalSMSBase, ExternalSMSPrefix)
+
 	return nil
 }

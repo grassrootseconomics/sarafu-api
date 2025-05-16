@@ -61,12 +61,24 @@ func (m TestAccountService) PoolDeposit(ctx context.Context, amount, from, poolA
 	return &models.PoolDepositResult{}, nil
 }
 
-func (m TestAccountService) CheckAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error) {
+func (m *TestAccountService) CheckAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error) {
 	return &models.AliasAddress{}, nil
 }
 
-func (m TestAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
+func (m *TestAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
 	return &models.RequestAliasResult{}, nil
+}
+
+func (m *TestAccountService) SendUpsellSMS(ctx context.Context, inviterPhone, inviteePhone string) (*models.SendSMSResponse, error) {
+	return &models.SendSMSResponse{}, nil
+}
+
+func (m *TestAccountService) SendAddressSMS(ctx context.Context, publicKey, originPhone string) error {
+	return nil
+}
+
+func (m *TestAccountService) SendPINResetSMS(ctx context.Context, admin, phone string) error {
+	return nil
 }
 
 func (m TestAccountService) FetchTopPools(ctx context.Context) ([]dataserviceapi.PoolDetails, error) {
