@@ -870,7 +870,6 @@ func (das *DevAccountService) GetPoolSwappableVouchers(ctx context.Context, pool
 }
 
 func (das *DevAccountService) GetSwapFromTokenMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.MaxLimitResult, error) {
-
 	p, ok := das.pools[poolAddress]
 	if !ok {
 		return nil, fmt.Errorf("Pool address: %v not found ", poolAddress)
@@ -882,5 +881,11 @@ func (das *DevAccountService) GetSwapFromTokenMaxLimit(ctx context.Context, pool
 
 	return &models.MaxLimitResult{
 		Max: limit,
+	}, nil
+}
+
+func (das *DevAccountService) CheckTokenInPool(ctx context.Context, poolAddress, tokenAddress string) (*models.TokenInPoolResult, error) {
+	return &models.TokenInPoolResult{
+		CanSwapFrom: true,
 	}, nil
 }

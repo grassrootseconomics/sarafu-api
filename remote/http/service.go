@@ -469,6 +469,33 @@ func (as *HTTPAccountService) getSwapFromTokenMaxLimit(ctx context.Context, pool
 	return &r.MaxPoolLimitResult, nil
 }
 
+func (as *HTTPAccountService) CheckTokenInPool(ctx context.Context, poolAddress, tokenAddress string) (*models.TokenInPoolResult, error) {
+	if as.UseApi {
+		return as.checkTokenInPool(ctx, poolAddress, tokenAddress)
+	} else {
+		svc := dev.NewDevAccountService(ctx, as.SS)
+		return svc.CheckTokenInPool(ctx, poolAddress, tokenAddress)
+	}
+}
+
+func (as *HTTPAccountService) checkTokenInPool(ctx context.Context, poolAddress, tokenAddress string) (*models.TokenInPoolResult, error) {
+	var r struct {
+		TokenInPoolResult models.TokenInPoolResult `json:"canSwapFrom"`
+	}
+
+	ep, err := url.JoinPath(config.PoolSwappableVouchersURL, poolAddress, "check", tokenAddress)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("GET", ep, nil)
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+
+	return &r.TokenInPoolResult, nil
+}
+
 // TODO: Use actual custodial api to request available alias
 func (as *HTTPAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
 	if as.SS == nil {
