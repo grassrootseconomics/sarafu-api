@@ -16,3 +16,7 @@ type PoolSwapResult struct {
 type MaxLimitResult struct {
 	Max string `json:"max"`
 }
+
+type TokenInPoolResult struct {
+	CanSwapFrom bool `json:"canSwapFrom"`
+}
