@@ -105,3 +105,8 @@ func (m MockAccountService) GetSwapFromTokenMaxLimit(ctx context.Context, poolAd
 	args := m.Called(poolAddress, fromTokenAddress, toTokenAddress, publicKey)
 	return args.Get(0).(*models.MaxLimitResult), args.Error(1)
 }
+
+func (m MockAccountService) CheckTokenInPool(ctx context.Context, poolAddress, tokenAddress string) (*models.TokenInPoolResult, error) {
+	args := m.Called(poolAddress, tokenAddress)
+	return args.Get(0).(*models.TokenInPoolResult), args.Error(1)
+}

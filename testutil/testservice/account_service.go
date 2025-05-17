@@ -104,3 +104,7 @@ func (m TestAccountService) PoolSwap(ctx context.Context, amount, from, fromToke
 func (m TestAccountService) GetSwapFromTokenMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.MaxLimitResult, error) {
 	return &models.MaxLimitResult{}, nil
 }
+
+func (m TestAccountService) CheckTokenInPool(ctx context.Context, poolAddress, tokenAddress string) (*models.TokenInPoolResult, error) {
+	return &models.TokenInPoolResult{}, nil
+}
