@@ -7,24 +7,24 @@ import (
 )
 
 const (
-	createAccountPath          = "/api/v2/account/create"
-	trackStatusPath            = "/api/track"
-	balancePathPrefix          = "/api/account"
-	trackPath                  = "/api/v2/account/status"
-	tokenTransferPrefix        = "/api/v2/token/transfer"
-	voucherHoldingsPathPrefix  = "/api/v1/holdings"
-	voucherTransfersPathPrefix = "/api/v1/transfers/last10"
-	voucherDataPathPrefix      = "/api/v1/token"
-	aliasPrefix                = "api/v1/alias"
-	SendSMSPrefix              = "api/v1/external/upsell"
-	poolDepositPrefix          = "/api/v2/pool/deposit"
-	poolSwapQoutePrefix        = "/api/v2/pool/quote"
-	poolSwapPrefix             = "/api/v2/pool/swap"
+	createAccountPath           = "/api/v2/account/create"
+	trackStatusPath             = "/api/track"
+	balancePathPrefix           = "/api/account"
+	trackPath                   = "/api/v2/account/status"
+	tokenTransferPrefix         = "/api/v2/token/transfer"
+	voucherHoldingsPathPrefix   = "/api/v1/holdings"
+	voucherTransfersPathPrefix  = "/api/v1/transfers/last10"
+	voucherDataPathPrefix       = "/api/v1/token"
+	aliasPrefix                 = "api/v1/alias"
+	SendSMSPrefix               = "api/v1/external/upsell"
+	poolDepositPrefix           = "/api/v2/pool/deposit"
+	poolSwapQoutePrefix         = "/api/v2/pool/quote"
+	poolSwapPrefix              = "/api/v2/pool/swap"
 	topPoolsPrefix              = "/api/v1/pool/top"
 	retrievePoolDetailsPrefix   = "/api/v1/pool/reverse"
 	poolSwappableVouchersPrefix = "/api/v1/pool"
-	AliasEnsPrefix             = "/api/v1/bypass"
-	ExternalSMSPrefix          = "/api/v1/external"
+	AliasEnsPrefix              = "/api/v1/bypass"
+	ExternalSMSPrefix           = "/api/v1/external"
 )
 
 var (
@@ -51,9 +51,9 @@ var (
 	TopPoolsURL              string
 	RetrievePoolDetailsURL   string
 	PoolSwappableVouchersURL string
-	SendSMSURL          string
-	AliasEnsURL         string
-	ExternalSMSURL      string
+	SendSMSURL               string
+	AliasEnsURL              string
+	ExternalSMSURL           string
 )
 
 func setBase() error {
