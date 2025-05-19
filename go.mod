@@ -8,7 +8,7 @@ require (
 	git.grassecon.net/grassrootseconomics/visedriver v0.8.0-beta.10.0.20250122123424-6749c632b0a2
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/grassrootseconomics/eth-custodial v1.3.0-beta
-	github.com/grassrootseconomics/ussd-data-service v1.4.0-beta
+	github.com/grassrootseconomics/ussd-data-service v1.4.4-beta
 	github.com/stretchr/testify v1.9.0
 )
 

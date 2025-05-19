@@ -20,6 +20,8 @@ github.com/grassrootseconomics/ussd-data-service v1.2.0-beta h1:fn1gwbWIwHVEBtUC
 github.com/grassrootseconomics/ussd-data-service v1.2.0-beta/go.mod h1:omfI0QtUwIdpu9gMcUqLMCG8O1XWjqJGBx1qUMiGWC0=
 github.com/grassrootseconomics/ussd-data-service v1.4.0-beta h1:4fMd/3h2ZIhRg4GdHQmRw5FfD3MpJvFNNJQo+Q27f5M=
 github.com/grassrootseconomics/ussd-data-service v1.4.0-beta/go.mod h1:9sGnorpKaK76FmOGXoh/xv7x5siSFNYdXxQo9BKW4DI=
+github.com/grassrootseconomics/ussd-data-service v1.4.4-beta h1:turlyo0i3OLj29mWpWNoB/3Qao8qEngT/5d1jDWTZE4=
+github.com/grassrootseconomics/ussd-data-service v1.4.4-beta/go.mod h1:9sGnorpKaK76FmOGXoh/xv7x5siSFNYdXxQo9BKW4DI=
 github.com/graygnuorg/go-gdbm v0.0.0-20220711140707-71387d66dce4 h1:U4kkNYryi/qfbBF8gh7Vsbuz+cVmhf5kt6pE9bYYyLo=
 github.com/graygnuorg/go-gdbm v0.0.0-20220711140707-71387d66dce4/go.mod h1:zpZDgZFzeq9s0MIeB1P50NIEWDFFHSFBohI/NbaTD/Y=
 github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
