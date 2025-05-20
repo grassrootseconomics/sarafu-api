@@ -452,9 +452,7 @@ func (as *HTTPAccountService) GetSwapFromTokenMaxLimit(ctx context.Context, pool
 }
 
 func (as *HTTPAccountService) getSwapFromTokenMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokeAddress, publicKey string) (*models.MaxLimitResult, error) {
-	var r struct {
-		MaxPoolLimitResult models.MaxLimitResult `json:"max"`
-	}
+	var r models.MaxLimitResult
 
 	ep, err := url.JoinPath(config.PoolSwappableVouchersURL, poolAddress, "limit", fromTokenAddress, toTokeAddress, publicKey)
 	if err != nil {
@@ -465,8 +463,11 @@ func (as *HTTPAccountService) getSwapFromTokenMaxLimit(ctx context.Context, pool
 		return nil, err
 	}
 	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
 
-	return &r.MaxPoolLimitResult, nil
+	return &r, nil
 }
 
 func (as *HTTPAccountService) CheckTokenInPool(ctx context.Context, poolAddress, tokenAddress string) (*models.TokenInPoolResult, error) {
@@ -479,9 +480,7 @@ func (as *HTTPAccountService) CheckTokenInPool(ctx context.Context, poolAddress,
 }
 
 func (as *HTTPAccountService) checkTokenInPool(ctx context.Context, poolAddress, tokenAddress string) (*models.TokenInPoolResult, error) {
-	var r struct {
-		TokenInPoolResult models.TokenInPoolResult `json:"canSwapFrom"`
-	}
+	var r models.TokenInPoolResult
 
 	ep, err := url.JoinPath(config.PoolSwappableVouchersURL, poolAddress, "check", tokenAddress)
 	if err != nil {
@@ -492,8 +491,11 @@ func (as *HTTPAccountService) checkTokenInPool(ctx context.Context, poolAddress,
 		return nil, err
 	}
 	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
 
-	return &r.TokenInPoolResult, nil
+	return &r, nil
 }
 
 // TODO: Use actual custodial api to request available alias
