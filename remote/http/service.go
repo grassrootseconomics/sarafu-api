@@ -392,7 +392,7 @@ func (as *HTTPAccountService) getPoolSwappableFromVouchers(ctx context.Context, 
 func (as *HTTPAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
 	svc := dev.NewDevAccountService(ctx, as.SS)
 	if as.UseApi {
-		return as.getPoolSwappableFromVouchers(ctx, poolAddress, publicKey)
+		return as.getPoolSwappableVouchers(ctx, poolAddress, publicKey)
 	} else {
 		return svc.GetPoolSwappableVouchers(ctx, poolAddress, publicKey)
 	}
