@@ -89,8 +89,8 @@ func (m TestAccountService) GetPoolSwappableFromVouchers(ctx context.Context, po
 	return []dataserviceapi.TokenHoldings{}, nil
 }
 
-func (m TestAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress string) ([]dataserviceapi.TokenHoldings, error) {
-	return []dataserviceapi.TokenHoldings{}, nil
+func (m TestAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress string) ([]dataserviceapi.TokenDetails, error) {
+	return []dataserviceapi.TokenDetails{}, nil
 }
 
 func (m TestAccountService) GetPoolSwapQuote(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapQuoteResult, error) {

@@ -852,18 +852,17 @@ func (das *DevAccountService) GetPoolSwappableFromVouchers(ctx context.Context, 
 	return swapFromList, nil
 }
 
-func (das *DevAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress string) ([]dataserviceapi.TokenHoldings, error) {
-	var swapToList []dataserviceapi.TokenHoldings
+func (das *DevAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress string) ([]dataserviceapi.TokenDetails, error) {
+	var swapToList []dataserviceapi.TokenDetails
 	_, ok := das.pools[poolAddress]
 	if !ok {
 		return nil, fmt.Errorf("Invalid pool address: %v", poolAddress)
 	}
 	for _, voucher := range das.vouchers {
-		swapToList = append(swapToList, dataserviceapi.TokenHoldings{
-			ContractAddress: voucher.Address,
-			TokenSymbol:     voucher.Symbol,
-			TokenDecimals:   string(defaultDecimals),
-			Balance:         fmt.Sprintf("%f", defaultVoucherBalance),
+		swapToList = append(swapToList, dataserviceapi.TokenDetails{
+			TokenAddress:  voucher.Address,
+			TokenSymbol:   voucher.Symbol,
+			TokenDecimals: defaultDecimals,
 		})
 	}
 	return swapToList, nil
