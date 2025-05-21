@@ -852,7 +852,7 @@ func (das *DevAccountService) GetPoolSwappableFromVouchers(ctx context.Context, 
 	return swapFromList, nil
 }
 
-func (das *DevAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+func (das *DevAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress string) ([]dataserviceapi.TokenHoldings, error) {
 	var swapToList []dataserviceapi.TokenHoldings
 	_, ok := das.pools[poolAddress]
 	if !ok {

@@ -86,8 +86,8 @@ func (m MockAccountService) GetPoolSwappableFromVouchers(ctx context.Context, po
 	return args.Get(0).([]dataserviceapi.TokenHoldings), args.Error(1)
 }
 
-func (m MockAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
-	args := m.Called(poolAddress, publicKey)
+func (m MockAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress string) ([]dataserviceapi.TokenHoldings, error) {
+	args := m.Called(poolAddress)
 	return args.Get(0).([]dataserviceapi.TokenHoldings), args.Error(1)
 }
 
