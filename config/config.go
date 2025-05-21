@@ -28,11 +28,12 @@ const (
 )
 
 var (
-	custodialURLBase string
-	dataURLBase      string
-	BearerToken      string
-	aliasEnsURLBase  string
-	externalSMSBase  string
+	custodialURLBase    string
+	dataURLBase         string
+	BearerToken         string
+	aliasEnsURLBase     string
+	externalSMSBase     string
+	IncludeStablesParam string
 )
 
 var (
@@ -64,6 +65,7 @@ func setBase() error {
 	aliasEnsURLBase = env.GetEnv("ALIAS_ENS_BASE", "http://localhost:5015")
 	externalSMSBase = env.GetEnv("EXTERNAL_SMS_BASE", "http://localhost:5035")
 	BearerToken = env.GetEnv("BEARER_TOKEN", "")
+	IncludeStablesParam = env.GetEnv("INCLUDE_STABLES_PARAM", "false")
 
 	_, err = url.Parse(custodialURLBase)
 	if err != nil {
