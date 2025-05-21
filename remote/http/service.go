@@ -403,20 +403,23 @@ func (as HTTPAccountService) getPoolSwappableVouchers(ctx context.Context, poolA
 		PoolSwappableVouchers []dataserviceapi.TokenHoldings `json:"filtered"`
 	}
 
-	ep, err := url.JoinPath(config.PoolSwappableVouchersURL, poolAddress, "to")
-	if err != nil {
-		return nil, err
-	}
-	u, err := url.Parse(ep)
+	basePath, err := url.JoinPath(config.PoolSwappableVouchersURL, poolAddress, "to")
 	if err != nil {
 		return nil, err
 	}
 
-	query := u.Query()
-	query.Set("stable", "true")
-	u.RawQuery = query.Encode()
+	parsedURL, err := url.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", u.String(), nil)
+	query := parsedURL.Query()
+	if config.IncludeStablesParam != "" {
+		query.Set("stables", config.IncludeStablesParam)
+	}
+	parsedURL.RawQuery = query.Encode()
+
+	req, err := http.NewRequest("GET", parsedURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
