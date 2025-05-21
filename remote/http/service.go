@@ -389,28 +389,38 @@ func (as *HTTPAccountService) getPoolSwappableFromVouchers(ctx context.Context, 
 	return r.PoolSwappableVouchers, nil
 }
 
-func (as *HTTPAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+func (as *HTTPAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress string) ([]dataserviceapi.TokenHoldings, error) {
 	svc := dev.NewDevAccountService(ctx, as.SS)
 	if as.UseApi {
-		return as.getPoolSwappableVouchers(ctx, poolAddress, publicKey)
+		return as.getPoolSwappableVouchers(ctx, poolAddress)
 	} else {
-		return svc.GetPoolSwappableVouchers(ctx, poolAddress, publicKey)
+		return svc.GetPoolSwappableVouchers(ctx, poolAddress)
 	}
 }
 
-func (as HTTPAccountService) getPoolSwappableVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+func (as HTTPAccountService) getPoolSwappableVouchers(ctx context.Context, poolAddress string) ([]dataserviceapi.TokenHoldings, error) {
 	var r struct {
 		PoolSwappableVouchers []dataserviceapi.TokenHoldings `json:"filtered"`
 	}
 
-	ep, err := url.JoinPath(config.PoolSwappableVouchersURL, poolAddress, "to", publicKey)
+	ep, err := url.JoinPath(config.PoolSwappableVouchersURL, poolAddress, "to")
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("GET", ep, nil)
+	u, err := url.Parse(ep)
 	if err != nil {
 		return nil, err
 	}
+
+	query := u.Query()
+	query.Set("stable", "true")
+	u.RawQuery = query.Encode()
+
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
 	_, err = doRequest(ctx, req, &r)
 	return r.PoolSwappableVouchers, nil
 }
