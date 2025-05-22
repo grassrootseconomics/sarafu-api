@@ -351,6 +351,7 @@ func (as *HTTPAccountService) GetPoolSwapQuote(ctx context.Context, amount, from
 	if err != nil {
 		return nil, err
 	}
+
 	req, err := http.NewRequest("POST", config.PoolSwapQuoteURL, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return nil, err
@@ -444,7 +445,8 @@ func (as *HTTPAccountService) PoolSwap(ctx context.Context, amount, from, fromTo
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("POST", config.PoolSwapQuoteURL, bytes.NewBuffer(payloadBytes))
+
+	req, err := http.NewRequest("POST", config.PoolSwapURL, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return nil, err
 	}
