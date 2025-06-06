@@ -85,6 +85,10 @@ func (m TestAccountService) FetchTopPools(ctx context.Context) ([]dataserviceapi
 	return []dataserviceapi.PoolDetails{}, nil
 }
 
+func (m TestAccountService) RetrievePoolDetails(ctx context.Context, sym string) (*dataserviceapi.PoolDetails, error) {
+	return &dataserviceapi.PoolDetails{}, nil
+}
+
 func (m TestAccountService) GetPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
 	return []dataserviceapi.TokenHoldings{}, nil
 }

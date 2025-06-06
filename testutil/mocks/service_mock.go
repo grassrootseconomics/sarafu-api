@@ -81,6 +81,11 @@ func (m MockAccountService) FetchTopPools(ctx context.Context) ([]dataserviceapi
 	return args.Get(0).([]dataserviceapi.PoolDetails), args.Error(1)
 }
 
+func (m MockAccountService) RetrievePoolDetails(ctx context.Context, sym string) (*dataserviceapi.PoolDetails, error) {
+	args := m.Called()
+	return args.Get(0).(*dataserviceapi.PoolDetails), args.Error(1)
+}
+
 func (m MockAccountService) GetPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
 	args := m.Called(poolAddress, publicKey)
 	return args.Get(0).([]dataserviceapi.TokenHoldings), args.Error(1)

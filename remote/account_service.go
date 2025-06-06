@@ -22,7 +22,7 @@ type AccountService interface {
 	SendPINResetSMS(ctx context.Context, admin, phone string) error
 	PoolDeposit(ctx context.Context, amount, from, poolAddress, tokenAddress string) (*models.PoolDepositResult, error)
 	FetchTopPools(ctx context.Context) ([]dataserviceapi.PoolDetails, error)
-	RetrievePoolDetails(ctx context.Context, sym string)
+	RetrievePoolDetails(ctx context.Context, sym string) (*dataserviceapi.PoolDetails, error)
 	GetPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error)
 	GetPoolSwappableVouchers(ctx context.Context, poolAddress string) ([]dataserviceapi.TokenDetails, error)
 	GetPoolSwapQuote(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapQuoteResult, error)

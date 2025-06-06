@@ -833,6 +833,18 @@ func (das *DevAccountService) FetchTopPools(ctx context.Context) ([]dataservicea
 	return topPools, nil
 }
 
+func (das *DevAccountService) RetrievePoolDetails(ctx context.Context, sym string) (*dataserviceapi.PoolDetails, error) {
+	testPool := &dataserviceapi.PoolDetails{
+		PoolName:            "DevTest",
+		PoolSymbol:          "DEVT",
+		PoolContractAdrress: "0x145F87d6198dEDD45C614FFD8b70E9a2fCCc5cc9",
+		LimiterAddress:      "",
+		VoucherRegistry:     "",
+	}
+
+	return testPool, nil
+}
+
 func (das *DevAccountService) GetPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
 	var swapFromList []dataserviceapi.TokenHoldings
 
