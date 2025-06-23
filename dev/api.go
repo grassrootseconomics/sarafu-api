@@ -587,7 +587,7 @@ func (das *DevAccountService) FetchVouchers(ctx context.Context, publicKey strin
 	//TODO: Iterate over the account acc.Balances object
 	for _, voucher := range das.vouchers {
 		holdings = append(holdings, dataserviceapi.TokenHoldings{
-			ContractAddress: voucher.Address,
+			TokenAddress: voucher.Address,
 			TokenSymbol:     voucher.Symbol,
 			TokenDecimals:   strconv.Itoa(voucher.Decimals),
 			Balance:         strconv.Itoa(int(defaultVoucherBalance)),
@@ -854,7 +854,7 @@ func (das *DevAccountService) GetPoolSwappableFromVouchers(ctx context.Context, 
 	}
 	for _, v := range p.Vouchers {
 		swapFromList = append(swapFromList, dataserviceapi.TokenHoldings{
-			ContractAddress: v.Address,
+			TokenAddress: v.Address,
 			TokenSymbol:     v.Symbol,
 			TokenDecimals:   string(defaultDecimals),
 			Balance:         fmt.Sprintf("%f", defaultVoucherBalance),
@@ -872,7 +872,7 @@ func (das *DevAccountService) GetPoolSwappableVouchers(ctx context.Context, pool
 	}
 	for _, voucher := range das.vouchers {
 		swapToList = append(swapToList, dataserviceapi.TokenHoldings{
-			ContractAddress:  voucher.Address,
+			TokenAddress:  voucher.Address,
 			TokenSymbol:   voucher.Symbol,
 			TokenDecimals: strconv.Itoa(voucher.Decimals),
 		})

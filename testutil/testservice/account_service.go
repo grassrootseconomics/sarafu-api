@@ -35,10 +35,10 @@ func (tas *TestAccountService) TrackAccountStatus(ctx context.Context, publicKey
 func (tas *TestAccountService) FetchVouchers(ctx context.Context, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
 	return []dataserviceapi.TokenHoldings{
 		dataserviceapi.TokenHoldings{
-			ContractAddress: "0x6CC75A06ac72eB4Db2eE22F781F5D100d8ec03ee",
-			TokenSymbol:     "SRF",
-			TokenDecimals:   "6",
-			Balance:         "2745987",
+			TokenAddress:  "0x6CC75A06ac72eB4Db2eE22F781F5D100d8ec03ee",
+			TokenSymbol:   "SRF",
+			TokenDecimals: "6",
+			Balance:       "2745987",
 		},
 	}, nil
 }
