@@ -390,7 +390,7 @@ func (as *HTTPAccountService) getPoolSwappableFromVouchers(ctx context.Context, 
 	return r.PoolSwappableVouchers, nil
 }
 
-func (as *HTTPAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress string) ([]dataserviceapi.TokenDetails, error) {
+func (as *HTTPAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress string) ([]dataserviceapi.TokenHoldings, error) {
 	svc := dev.NewDevAccountService(ctx, as.SS)
 	if as.UseApi {
 		return as.getPoolSwappableVouchers(ctx, poolAddress)
@@ -399,9 +399,9 @@ func (as *HTTPAccountService) GetPoolSwappableVouchers(ctx context.Context, pool
 	}
 }
 
-func (as HTTPAccountService) getPoolSwappableVouchers(ctx context.Context, poolAddress string) ([]dataserviceapi.TokenDetails, error) {
+func (as HTTPAccountService) getPoolSwappableVouchers(ctx context.Context, poolAddress string) ([]dataserviceapi.TokenHoldings, error) {
 	var r struct {
-		PoolSwappableVouchers []dataserviceapi.TokenDetails `json:"filtered"`
+		PoolSwappableVouchers []dataserviceapi.TokenHoldings `json:"filtered"`
 	}
 
 	basePath, err := url.JoinPath(config.PoolSwappableVouchersURL, poolAddress, "to")
