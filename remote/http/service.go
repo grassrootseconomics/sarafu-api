@@ -653,6 +653,7 @@ func doRequest(ctx context.Context, req *http.Request, rcpt any) (*api.OKRespons
 	req.Header.Set("Authorization", "Bearer "+config.BearerToken)
 	req.Header.Set("Content-Type", "application/json")
 
+	// Log request
 	logRequestDetails(req)
 
 	resp, err := http.DefaultClient.Do(req)
@@ -663,22 +664,26 @@ func doRequest(ctx context.Context, req *http.Request, rcpt any) (*api.OKRespons
 	}
 	defer resp.Body.Close()
 
-	log.Printf("Received response for %s: Status Code: %d | Content-Type: %s", req.URL, resp.StatusCode, resp.Header.Get("Content-Type"))
+	// Read and log response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
+
+	log.Printf("Received response for %s: Status Code: %d | Content-Type: %s | Body: %s",
+		req.URL, resp.StatusCode, resp.Header.Get("Content-Type"), string(body))
+
 	if resp.StatusCode >= http.StatusBadRequest {
-		err := json.Unmarshal([]byte(body), &errResponse)
-		if err != nil {
+		if err := json.Unmarshal(body, &errResponse); err != nil {
 			return nil, err
 		}
 		return nil, errors.New(errResponse.Description)
 	}
-	err = json.Unmarshal([]byte(body), &okResponse)
-	if err != nil {
+
+	if err := json.Unmarshal(body, &okResponse); err != nil {
 		return nil, err
 	}
+
 	if len(okResponse.Result) == 0 {
 		return nil, errors.New("Empty api result")
 	}
@@ -695,16 +700,14 @@ func doRequest(ctx context.Context, req *http.Request, rcpt any) (*api.OKRespons
 func logRequestDetails(req *http.Request) {
 	var bodyBytes []byte
 	contentType := req.Header.Get("Content-Type")
+
 	if req.Body != nil {
-		bodyBytes, err := io.ReadAll(req.Body)
-		if err != nil {
-			log.Printf("Error reading request body: %s", err)
-			return
-		}
-		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		bodyBytes, _ = io.ReadAll(req.Body)
+		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Restore body
 	} else {
 		bodyBytes = []byte("-")
 	}
 
-	log.Printf("URL: %s | Content-Type: %s | Method: %s| Request Body: %s", req.URL, contentType, req.Method, string(bodyBytes))
+	log.Printf("Outgoing Request -> URL: %s | Method: %s | Content-Type: %s | Body: %s",
+		req.URL.String(), req.Method, contentType, string(bodyBytes))
 }
