@@ -286,7 +286,9 @@ func (as *HTTPAccountService) RetrievePoolDetails(ctx context.Context, sym strin
 }
 
 func retrievePoolDetails(ctx context.Context, sym string) (*dataserviceapi.PoolDetails, error) {
-	var r dataserviceapi.PoolDetails
+	var r struct {
+		PoolDetails dataserviceapi.PoolDetails `json:"poolDetails"`
+	}
 
 	ep, err := url.JoinPath(config.RetrievePoolDetailsURL, sym)
 	if err != nil {
@@ -297,7 +299,11 @@ func retrievePoolDetails(ctx context.Context, sym string) (*dataserviceapi.PoolD
 		return nil, err
 	}
 	_, err = doRequest(ctx, req, &r)
-	return &r, nil
+	if err != nil {
+		return nil, err
+	}
+
+	return &r.PoolDetails, nil
 }
 
 func (as *HTTPAccountService) PoolDeposit(ctx context.Context, amount, from, poolAddress, tokenAddress string) (*models.PoolDepositResult, error) {
@@ -528,7 +534,7 @@ func requestEnsAlias(ctx context.Context, publicKey string, hint string) (*model
 	var r models.AliasEnsResult
 
 	endpoint := config.AliasRegistrationURL
-	
+
 	logg.InfoCtxf(ctx, "requesting alias", "endpoint", endpoint, "hint", hint)
 	//Payload with the address and hint to derive an ENS name
 	payload := map[string]string{
