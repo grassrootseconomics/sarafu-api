@@ -234,33 +234,24 @@ func (as *HTTPAccountService) CheckAliasAddress(ctx context.Context, alias strin
 }
 
 func resolveAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error) {
-	var (
-		aliasEnsResult models.AliasEnsAddressResult
-	)
+	var aliasEnsResult models.AliasEnsAddressResult
 
-	ep, err := url.JoinPath(config.CheckAliasURL, "/resolve")
+	fullURL, err := url.JoinPath(config.AliasResolverURL, alias)
 	if err != nil {
 		return nil, err
 	}
 
-	u, err := url.Parse(ep)
+	req, err := http.NewRequest("GET", fullURL, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	query := u.Query()
-	query.Set("name", alias)
-	u.RawQuery = query.Encode()
-
-	req, err := http.NewRequest("GET", u.String(), nil)
-	if err != nil {
-		return nil, err
-	}
 	_, err = doRequest(ctx, req, &aliasEnsResult)
 	if err != nil {
 		return nil, err
 	}
-	return &models.AliasAddress{Address: aliasEnsResult.Address}, err
+
+	return &models.AliasAddress{Address: aliasEnsResult.Address}, nil
 }
 
 func (as *HTTPAccountService) FetchTopPools(ctx context.Context) ([]dataserviceapi.PoolDetails, error) {
@@ -536,11 +527,9 @@ func (as *HTTPAccountService) RequestAlias(ctx context.Context, publicKey string
 func requestEnsAlias(ctx context.Context, publicKey string, hint string) (*models.AliasEnsResult, error) {
 	var r models.AliasEnsResult
 
-	ep, err := url.JoinPath(config.CheckAliasURL, "/register")
-	if err != nil {
-		return nil, err
-	}
-	logg.InfoCtxf(ctx, "requesting alias", "endpoint", ep, "hint", hint)
+	endpoint := config.AliasRegistrationURL
+	
+	logg.InfoCtxf(ctx, "requesting alias", "endpoint", endpoint, "hint", hint)
 	//Payload with the address and hint to derive an ENS name
 	payload := map[string]string{
 		"address": publicKey,
@@ -550,7 +539,7 @@ func requestEnsAlias(ctx context.Context, publicKey string, hint string) (*model
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("POST", ep, bytes.NewBuffer(payloadBytes))
+	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return nil, err
 	}
