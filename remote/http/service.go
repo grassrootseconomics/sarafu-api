@@ -234,35 +234,283 @@ func (as *HTTPAccountService) CheckAliasAddress(ctx context.Context, alias strin
 }
 
 func resolveAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error) {
-	var (
-		aliasEnsResult models.AliasEnsAddressResult
-	)
+	var aliasEnsResult models.AliasEnsAddressResult
 
-	ep, err := url.JoinPath(config.AliasEnsURL, "/resolve")
+	fullURL, err := url.JoinPath(config.AliasResolverURL, alias)
 	if err != nil {
 		return nil, err
 	}
 
-	u, err := url.Parse(ep)
+	req, err := http.NewRequest("GET", fullURL, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	query := u.Query()
-	query.Set("name", alias)
-	u.RawQuery = query.Encode()
-
-	req, err := http.NewRequest("GET", u.String(), nil)
-	if err != nil {
-		return nil, err
-	}
 	_, err = doRequest(ctx, req, &aliasEnsResult)
 	if err != nil {
 		return nil, err
 	}
-	return &models.AliasAddress{Address: aliasEnsResult.Address}, err
+
+	return &models.AliasAddress{Address: aliasEnsResult.Address}, nil
 }
 
+func (as *HTTPAccountService) FetchTopPools(ctx context.Context) ([]dataserviceapi.PoolDetails, error) {
+	svc := dev.NewDevAccountService(ctx, as.SS)
+	if as.UseApi {
+		return fetchCustodialTopPools(ctx)
+	} else {
+		return svc.FetchTopPools(ctx)
+	}
+}
+
+func fetchCustodialTopPools(ctx context.Context) ([]dataserviceapi.PoolDetails, error) {
+	var r struct {
+		TopPools []dataserviceapi.PoolDetails `json:"topPools"`
+	}
+
+	req, err := http.NewRequest("GET", config.TopPoolsURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = doRequest(ctx, req, &r)
+	return r.TopPools, nil
+}
+
+func (as *HTTPAccountService) RetrievePoolDetails(ctx context.Context, sym string) (*dataserviceapi.PoolDetails, error) {
+	if as.UseApi {
+		return retrievePoolDetails(ctx, sym)
+	} else {
+		return nil, nil
+	}
+}
+
+func retrievePoolDetails(ctx context.Context, sym string) (*dataserviceapi.PoolDetails, error) {
+	var r struct {
+		PoolDetails dataserviceapi.PoolDetails `json:"poolDetails"`
+	}
+
+	ep, err := url.JoinPath(config.RetrievePoolDetailsURL, sym)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("GET", ep, nil)
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+
+	return &r.PoolDetails, nil
+}
+
+func (as *HTTPAccountService) PoolDeposit(ctx context.Context, amount, from, poolAddress, tokenAddress string) (*models.PoolDepositResult, error) {
+	var r models.PoolDepositResult
+
+	//pool deposit payload
+	payload := map[string]string{
+		"amount":       amount,
+		"from":         from,
+		"poolAddress":  poolAddress,
+		"tokenAddress": tokenAddress,
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("POST", config.TokenTransferURL, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+	return &r, nil
+}
+
+func (as *HTTPAccountService) GetPoolSwapQuote(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapQuoteResult, error) {
+	var r models.PoolSwapQuoteResult
+
+	//pool swap quote payload
+	payload := map[string]string{
+		"amount":           amount,
+		"from":             from,
+		"fromTokenAddress": fromTokenAddress,
+		"poolAddress":      poolAddress,
+		"toTokenAddress":   toTokenAddress,
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", config.PoolSwapQuoteURL, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+	return &r, nil
+}
+
+func (as *HTTPAccountService) GetPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+	if as.UseApi {
+		return as.getPoolSwappableFromVouchers(ctx, poolAddress, publicKey)
+	} else {
+		svc := dev.NewDevAccountService(ctx, as.SS)
+		return svc.GetPoolSwappableFromVouchers(ctx, poolAddress, publicKey)
+	}
+
+}
+
+func (as *HTTPAccountService) getPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+	var r struct {
+		PoolSwappableVouchers []dataserviceapi.TokenHoldings `json:"filtered"`
+	}
+	ep, err := url.JoinPath(config.PoolSwappableVouchersURL, poolAddress, "from", publicKey)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("GET", ep, nil)
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+
+	return r.PoolSwappableVouchers, nil
+}
+
+func (as *HTTPAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress string) ([]dataserviceapi.TokenHoldings, error) {
+	svc := dev.NewDevAccountService(ctx, as.SS)
+	if as.UseApi {
+		return as.getPoolSwappableVouchers(ctx, poolAddress)
+	} else {
+		return svc.GetPoolSwappableVouchers(ctx, poolAddress)
+	}
+}
+
+func (as HTTPAccountService) getPoolSwappableVouchers(ctx context.Context, poolAddress string) ([]dataserviceapi.TokenHoldings, error) {
+	var r struct {
+		PoolSwappableVouchers []dataserviceapi.TokenHoldings `json:"filtered"`
+	}
+
+	basePath, err := url.JoinPath(config.PoolSwappableVouchersURL, poolAddress, "to")
+	if err != nil {
+		return nil, err
+	}
+
+	parsedURL, err := url.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	query := parsedURL.Query()
+	if config.IncludeStablesParam != "" {
+		query.Set("stables", config.IncludeStablesParam)
+	}
+	parsedURL.RawQuery = query.Encode()
+
+	req, err := http.NewRequest("GET", parsedURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = doRequest(ctx, req, &r)
+	return r.PoolSwappableVouchers, nil
+}
+
+func (as *HTTPAccountService) PoolSwap(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapResult, error) {
+	var r models.PoolSwapResult
+
+	//swap payload
+	payload := map[string]string{
+		"amount":           amount,
+		"from":             from,
+		"fromTokenAddress": fromTokenAddress,
+		"poolAddress":      poolAddress,
+		"toTokenAddress":   toTokenAddress,
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", config.PoolSwapURL, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+	return &r, nil
+}
+
+func (as *HTTPAccountService) GetSwapFromTokenMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.MaxLimitResult, error) {
+	if as.UseApi {
+		return as.getSwapFromTokenMaxLimit(ctx, poolAddress, fromTokenAddress, toTokenAddress, publicKey)
+	} else {
+		svc := dev.NewDevAccountService(ctx, as.SS)
+		return svc.GetSwapFromTokenMaxLimit(ctx, poolAddress, fromTokenAddress, toTokenAddress, publicKey)
+	}
+}
+
+func (as *HTTPAccountService) getSwapFromTokenMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokeAddress, publicKey string) (*models.MaxLimitResult, error) {
+	var r models.MaxLimitResult
+
+	ep, err := url.JoinPath(config.PoolSwappableVouchersURL, poolAddress, "limit", fromTokenAddress, toTokeAddress, publicKey)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("GET", ep, nil)
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+
+	return &r, nil
+}
+
+func (as *HTTPAccountService) CheckTokenInPool(ctx context.Context, poolAddress, tokenAddress string) (*models.TokenInPoolResult, error) {
+	if as.UseApi {
+		return as.checkTokenInPool(ctx, poolAddress, tokenAddress)
+	} else {
+		svc := dev.NewDevAccountService(ctx, as.SS)
+		return svc.CheckTokenInPool(ctx, poolAddress, tokenAddress)
+	}
+}
+
+func (as *HTTPAccountService) checkTokenInPool(ctx context.Context, poolAddress, tokenAddress string) (*models.TokenInPoolResult, error) {
+	var r models.TokenInPoolResult
+
+	ep, err := url.JoinPath(config.PoolSwappableVouchersURL, poolAddress, "check", tokenAddress)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("GET", ep, nil)
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+
+	return &r, nil
+}
+
+// TODO: Use actual custodial api to request available alias
 func (as *HTTPAccountService) RequestAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
 	if as.SS == nil {
 		return nil, fmt.Errorf("The storage service cannot be nil")
@@ -285,11 +533,9 @@ func (as *HTTPAccountService) RequestAlias(ctx context.Context, publicKey string
 func requestEnsAlias(ctx context.Context, publicKey string, hint string) (*models.AliasEnsResult, error) {
 	var r models.AliasEnsResult
 
-	ep, err := url.JoinPath(config.AliasEnsURL, "/register")
-	if err != nil {
-		return nil, err
-	}
-	logg.InfoCtxf(ctx, "requesting alias", "endpoint", ep, "hint", hint)
+	endpoint := config.AliasRegistrationURL
+
+	logg.InfoCtxf(ctx, "requesting alias", "endpoint", endpoint, "hint", hint)
 	//Payload with the address and hint to derive an ENS name
 	payload := map[string]string{
 		"address": publicKey,
@@ -299,7 +545,7 @@ func requestEnsAlias(ctx context.Context, publicKey string, hint string) (*model
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("POST", ep, bytes.NewBuffer(payloadBytes))
+	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return nil, err
 	}
@@ -402,6 +648,7 @@ func doRequest(ctx context.Context, req *http.Request, rcpt any) (*api.OKRespons
 	req.Header.Set("Authorization", "Bearer "+config.BearerToken)
 	req.Header.Set("Content-Type", "application/json")
 
+	// Log request
 	logRequestDetails(req)
 
 	resp, err := http.DefaultClient.Do(req)
@@ -412,22 +659,26 @@ func doRequest(ctx context.Context, req *http.Request, rcpt any) (*api.OKRespons
 	}
 	defer resp.Body.Close()
 
-	log.Printf("Received response for %s: Status Code: %d | Content-Type: %s", req.URL, resp.StatusCode, resp.Header.Get("Content-Type"))
+	// Read and log response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
+
+	log.Printf("Received response for %s: Status Code: %d | Content-Type: %s | Body: %s",
+		req.URL, resp.StatusCode, resp.Header.Get("Content-Type"), string(body))
+
 	if resp.StatusCode >= http.StatusBadRequest {
-		err := json.Unmarshal([]byte(body), &errResponse)
-		if err != nil {
+		if err := json.Unmarshal(body, &errResponse); err != nil {
 			return nil, err
 		}
 		return nil, errors.New(errResponse.Description)
 	}
-	err = json.Unmarshal([]byte(body), &okResponse)
-	if err != nil {
+
+	if err := json.Unmarshal(body, &okResponse); err != nil {
 		return nil, err
 	}
+
 	if len(okResponse.Result) == 0 {
 		return nil, errors.New("Empty api result")
 	}
@@ -444,16 +695,14 @@ func doRequest(ctx context.Context, req *http.Request, rcpt any) (*api.OKRespons
 func logRequestDetails(req *http.Request) {
 	var bodyBytes []byte
 	contentType := req.Header.Get("Content-Type")
+
 	if req.Body != nil {
-		bodyBytes, err := io.ReadAll(req.Body)
-		if err != nil {
-			log.Printf("Error reading request body: %s", err)
-			return
-		}
-		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		bodyBytes, _ = io.ReadAll(req.Body)
+		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Restore body
 	} else {
 		bodyBytes = []byte("-")
 	}
 
-	log.Printf("URL: %s | Content-Type: %s | Method: %s| Request Body: %s", req.URL, contentType, req.Method, string(bodyBytes))
+	log.Printf("Outgoing Request -> URL: %s | Method: %s | Content-Type: %s | Body: %s",
+		req.URL.String(), req.Method, contentType, string(bodyBytes))
 }

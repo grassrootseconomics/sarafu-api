@@ -35,10 +35,10 @@ func (tas *TestAccountService) TrackAccountStatus(ctx context.Context, publicKey
 func (tas *TestAccountService) FetchVouchers(ctx context.Context, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
 	return []dataserviceapi.TokenHoldings{
 		dataserviceapi.TokenHoldings{
-			ContractAddress: "0x6CC75A06ac72eB4Db2eE22F781F5D100d8ec03ee",
-			TokenSymbol:     "SRF",
-			TokenDecimals:   "6",
-			Balance:         "2745987",
+			TokenAddress:  "0x6CC75A06ac72eB4Db2eE22F781F5D100d8ec03ee",
+			TokenSymbol:   "SRF",
+			TokenDecimals: "6",
+			Balance:       "2745987",
 		},
 	}, nil
 }
@@ -55,6 +55,10 @@ func (tas *TestAccountService) TokenTransfer(ctx context.Context, amount, from, 
 	return &models.TokenTransferResponse{
 		TrackingId: "e034d147-747d-42ea-928d-b5a7cb3426af",
 	}, nil
+}
+
+func (m TestAccountService) PoolDeposit(ctx context.Context, amount, from, poolAddress, tokenAddress string) (*models.PoolDepositResult, error) {
+	return &models.PoolDepositResult{}, nil
 }
 
 func (m *TestAccountService) CheckAliasAddress(ctx context.Context, alias string) (*models.AliasAddress, error) {
@@ -75,4 +79,36 @@ func (m *TestAccountService) SendAddressSMS(ctx context.Context, publicKey, orig
 
 func (m *TestAccountService) SendPINResetSMS(ctx context.Context, admin, phone string) error {
 	return nil
+}
+
+func (m TestAccountService) FetchTopPools(ctx context.Context) ([]dataserviceapi.PoolDetails, error) {
+	return []dataserviceapi.PoolDetails{}, nil
+}
+
+func (m TestAccountService) RetrievePoolDetails(ctx context.Context, sym string) (*dataserviceapi.PoolDetails, error) {
+	return &dataserviceapi.PoolDetails{}, nil
+}
+
+func (m TestAccountService) GetPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
+	return []dataserviceapi.TokenHoldings{}, nil
+}
+
+func (m TestAccountService) GetPoolSwappableVouchers(ctx context.Context, poolAddress string) ([]dataserviceapi.TokenHoldings, error) {
+	return []dataserviceapi.TokenHoldings{}, nil
+}
+
+func (m TestAccountService) GetPoolSwapQuote(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapQuoteResult, error) {
+	return &models.PoolSwapQuoteResult{}, nil
+}
+
+func (m TestAccountService) PoolSwap(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapResult, error) {
+	return &models.PoolSwapResult{}, nil
+}
+
+func (m TestAccountService) GetSwapFromTokenMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.MaxLimitResult, error) {
+	return &models.MaxLimitResult{}, nil
+}
+
+func (m TestAccountService) CheckTokenInPool(ctx context.Context, poolAddress, tokenAddress string) (*models.TokenInPoolResult, error) {
+	return &models.TokenInPoolResult{}, nil
 }

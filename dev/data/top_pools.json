@@ -1,0 +1,43 @@
+{
+    "ok": true,
+    "description": "Top 5 pools sorted by swaps",
+    "result": {
+        "topPools": [
+            {
+                "poolName": "Kenya ROLA Pool",
+                "poolSymbol": "ROLA",
+                "poolContractAddress": "0x48a953cA5cf5298bc6f6Af3C608351f537AAcb9e",
+                "limiterAddress": "",
+                "voucherRegistry": ""
+            },
+            {
+                "poolName": "Nairobi ROLA Pool",
+                "poolSymbol": "NAIROBI",
+                "poolContractAddress": "0xB0660Ac1Ee3d32ea35bc728D7CA1705Fa5A37528",
+                "limiterAddress": "",
+                "voucherRegistry": ""
+            },
+            {
+                "poolName": "Friends of Kiriba Ecosystem ",
+                "poolSymbol": "FRIENDS",
+                "poolContractAddress": "0xC4848263821FA02baB2181910A2eFb9CECb2c21C",
+                "limiterAddress": "",
+                "voucherRegistry": ""
+            },
+            {
+                "poolName": "Resilient Community Waqfs",
+                "poolSymbol": "REZILIENS",
+                "poolContractAddress": "0x1e40951d7a28147D8B4A554C60c42766C92e2Fc6",
+                "limiterAddress": "",
+                "voucherRegistry": ""
+            },
+            {
+                "poolName": "GrE Tech",
+                "poolSymbol": "GRET",
+                "poolContractAddress": "0xb7B9d0A264eD1a8E2418571B7AC5933C79C9c2B8",
+                "limiterAddress": "",
+                "voucherRegistry": ""
+            }
+        ]
+    }
+}

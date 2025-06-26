@@ -20,4 +20,13 @@ type AccountService interface {
 	SendUpsellSMS(ctx context.Context, inviterPhone, inviteePhone string) (*models.SendSMSResponse, error)
 	SendAddressSMS(ctx context.Context, publicKey, originPhone string) error
 	SendPINResetSMS(ctx context.Context, admin, phone string) error
+	PoolDeposit(ctx context.Context, amount, from, poolAddress, tokenAddress string) (*models.PoolDepositResult, error)
+	FetchTopPools(ctx context.Context) ([]dataserviceapi.PoolDetails, error)
+	RetrievePoolDetails(ctx context.Context, sym string) (*dataserviceapi.PoolDetails, error)
+	GetPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error)
+	GetPoolSwappableVouchers(ctx context.Context, poolAddress string) ([]dataserviceapi.TokenHoldings, error)
+	GetPoolSwapQuote(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapQuoteResult, error)
+	PoolSwap(ctx context.Context, amount, from, fromTokenAddress, poolAddress, toTokenAddress string) (*models.PoolSwapResult, error)
+	GetSwapFromTokenMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.MaxLimitResult, error)
+	CheckTokenInPool(ctx context.Context, poolAddress, tokenAddress string) (*models.TokenInPoolResult, error)
 }
