@@ -58,6 +58,11 @@ func (m *MockAccountService) RequestAlias(ctx context.Context, publicKey string,
 	return args.Get(0).(*models.RequestAliasResult), args.Error(1)
 }
 
+func (m *MockAccountService) UpdateAlias(ctx context.Context, publicKey string, name string) (*models.RequestAliasResult, error) {
+	args := m.Called(publicKey, name)
+	return args.Get(0).(*models.RequestAliasResult), args.Error(1)
+}
+
 func (m *MockAccountService) SendUpsellSMS(ctx context.Context, inviterPhone, inviteePhone string) (*models.SendSMSResponse, error) {
 	args := m.Called(inviterPhone, inviteePhone)
 	return args.Get(0).(*models.SendSMSResponse), args.Error(1)

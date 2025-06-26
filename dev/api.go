@@ -806,6 +806,13 @@ func (das *DevAccountService) RequestAlias(ctx context.Context, publicKey string
 	}, nil
 }
 
+func (das *DevAccountService) UpdateAlias(ctx context.Context, publicKey string, name string) (*models.RequestAliasResult, error) {
+	logg.DebugCtxf(ctx, "Updated the alias", "address", publicKey, "name", name)
+	return &models.RequestAliasResult{
+		Alias: name,
+	}, nil
+}
+
 func (das *DevAccountService) SendUpsellSMS(ctx context.Context, inviterPhone, inviteePhone string) (*models.SendSMSResponse, error) {
 	logg.DebugCtxf(ctx, "sent an SMS", "inviterPhone", inviterPhone, "inviteePhone", inviteePhone)
 	return &models.SendSMSResponse{

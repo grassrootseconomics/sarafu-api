@@ -69,6 +69,10 @@ func (m *TestAccountService) RequestAlias(ctx context.Context, publicKey string,
 	return &models.RequestAliasResult{}, nil
 }
 
+func (m *TestAccountService) UpdateAlias(ctx context.Context, publicKey string, hint string) (*models.RequestAliasResult, error) {
+	return &models.RequestAliasResult{}, nil
+}
+
 func (m *TestAccountService) SendUpsellSMS(ctx context.Context, inviterPhone, inviteePhone string) (*models.SendSMSResponse, error) {
 	return &models.SendSMSResponse{}, nil
 }
