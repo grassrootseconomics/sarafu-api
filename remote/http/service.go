@@ -559,7 +559,7 @@ func requestEnsAlias(ctx context.Context, publicKey string, hint string) (*model
 	return &r, nil
 }
 
-func (as *HTTPAccountService) UpdateAlias(ctx context.Context, publicKey string, name string) (*models.RequestAliasResult, error) {
+func (as *HTTPAccountService) UpdateAlias(ctx context.Context, name string, publicKey string) (*models.RequestAliasResult, error) {
 	if as.SS == nil {
 		return nil, fmt.Errorf("The storage service cannot be nil")
 	}
@@ -567,7 +567,7 @@ func (as *HTTPAccountService) UpdateAlias(ctx context.Context, publicKey string,
 		if !strings.Contains(name, ".") {
 			name = as.ToFqdn(name)
 		}
-		enr, err := updateEnsAlias(ctx, publicKey, name)
+		enr, err := updateEnsAlias(ctx, name, publicKey)
 		if err != nil {
 			return nil, err
 		}
@@ -578,7 +578,7 @@ func (as *HTTPAccountService) UpdateAlias(ctx context.Context, publicKey string,
 	}
 }
 
-func updateEnsAlias(ctx context.Context, publicKey string, name string) (*models.AliasEnsResult, error) {
+func updateEnsAlias(ctx context.Context, name string, publicKey string) (*models.AliasEnsResult, error) {
 	var r models.AliasEnsResult
 
 	endpoint := config.AliasUpdateURL
