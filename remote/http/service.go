@@ -581,7 +581,7 @@ func (as *HTTPAccountService) UpdateAlias(ctx context.Context, publicKey string,
 func updateEnsAlias(ctx context.Context, publicKey string, name string) (*models.AliasEnsResult, error) {
 	var r models.AliasEnsResult
 
-	endpoint := config.AliasRegistrationURL
+	endpoint := config.AliasUpdateURL
 
 	logg.InfoCtxf(ctx, "updating alias", "endpoint", endpoint, "name", name)
 
