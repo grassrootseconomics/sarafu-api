@@ -593,7 +593,7 @@ func updateEnsAlias(ctx context.Context, publicKey string, name string) (*models
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(payloadBytes))
+	req, err := http.NewRequest("PUT", endpoint, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return nil, err
 	}
