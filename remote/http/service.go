@@ -559,6 +559,54 @@ func requestEnsAlias(ctx context.Context, publicKey string, hint string) (*model
 	return &r, nil
 }
 
+func (as *HTTPAccountService) UpdateAlias(ctx context.Context, name string, publicKey string) (*models.RequestAliasResult, error) {
+	if as.SS == nil {
+		return nil, fmt.Errorf("The storage service cannot be nil")
+	}
+	if as.UseApi {
+		if !strings.Contains(name, ".") {
+			name = as.ToFqdn(name)
+		}
+		enr, err := updateEnsAlias(ctx, name, publicKey)
+		if err != nil {
+			return nil, err
+		}
+		return &models.RequestAliasResult{Alias: enr.Name}, nil
+	} else {
+		svc := dev.NewDevAccountService(ctx, as.SS)
+		return svc.RequestAlias(ctx, publicKey, name)
+	}
+}
+
+func updateEnsAlias(ctx context.Context, name string, publicKey string) (*models.AliasEnsResult, error) {
+	var r models.AliasEnsResult
+
+	endpoint := config.AliasUpdateURL
+
+	logg.InfoCtxf(ctx, "updating alias", "endpoint", endpoint, "name", name)
+
+	payload := map[string]string{
+		"name":    name,
+		"address": publicKey,
+	}
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("PUT", endpoint, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return nil, err
+	}
+	// Log the request body
+	logg.InfoCtxf(ctx, "request body", "payload", string(payloadBytes))
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+	logg.InfoCtxf(ctx, "alias successfully updated", "alias", r.Name)
+	return &r, nil
+}
+
 // SendSMS calls the API to send out an SMS.
 // Parameters:
 //   - inviterPhone: The user initiating the SMS.

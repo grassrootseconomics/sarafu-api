@@ -25,6 +25,7 @@ const (
 	AliasRegistrationPrefix     = "/api/v1/internal/register"
 	AliasResolverPrefix         = "/api/v1/resolve"
 	ExternalSMSPrefix           = "/api/v1/external"
+	AliasUpdatePrefix           = "/api/v1/internal/update"
 )
 
 var (
@@ -55,6 +56,7 @@ var (
 	AliasRegistrationURL     string
 	AliasResolverURL         string
 	ExternalSMSURL           string
+	AliasUpdateURL           string
 )
 
 func setBase() error {
@@ -102,6 +104,7 @@ func LoadConfig() error {
 	AliasRegistrationURL, _ = url.JoinPath(aliasEnsURLBase, AliasRegistrationPrefix)
 	AliasResolverURL, _ = url.JoinPath(aliasEnsURLBase, AliasResolverPrefix)
 	ExternalSMSURL, _ = url.JoinPath(externalSMSBase, ExternalSMSPrefix)
+	AliasUpdateURL, _ = url.JoinPath(aliasEnsURLBase, AliasUpdatePrefix)
 
 	return nil
 }

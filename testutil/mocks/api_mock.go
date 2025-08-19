@@ -58,6 +58,10 @@ func (m MockApi) RequestAlias(ctx context.Context, publicKey string, hint string
 	return nil, nil
 }
 
+func (m MockApi) UpdateAlias(ctx context.Context, publicKey string, name string) (*models.RequestAliasResult, error) {
+	return nil, nil
+}
+
 func (m MockApi) TokenTransfer(ctx context.Context, amount, from, to, tokenAddress string) (*models.TokenTransferResponse, error) {
 	return nil, nil
 }
