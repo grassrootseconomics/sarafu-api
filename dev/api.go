@@ -12,18 +12,18 @@ import (
 	"strings"
 	"time"
 
-	"git.defalsify.org/vise.git/db"
-	"git.defalsify.org/vise.git/logging"
 	"git.grassecon.net/grassrootseconomics/common/phone"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/event"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
 	"git.grassecon.net/grassrootseconomics/visedriver/storage"
 	"github.com/gofrs/uuid"
+	"github.com/grassrootseconomics/go-vise/db"
+	slogging "github.com/grassrootseconomics/go-vise/slog"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
 
 var (
-	logg         = logging.NewVanilla().WithDomain("sarafu-api.devapi")
+	logg         = slogging.Get().With("component", "sarafu-api.devapi")
 	aliasRegex   = regexp.MustCompile("^\\+?[a-zA-Z0-9\\-_]+$")
 	searchDomain = ".sarafu.local"
 )
@@ -587,10 +587,10 @@ func (das *DevAccountService) FetchVouchers(ctx context.Context, publicKey strin
 	//TODO: Iterate over the account acc.Balances object
 	for _, voucher := range das.vouchers {
 		holdings = append(holdings, dataserviceapi.TokenHoldings{
-			TokenAddress: voucher.Address,
-			TokenSymbol:     voucher.Symbol,
-			TokenDecimals:   strconv.Itoa(voucher.Decimals),
-			Balance:         strconv.Itoa(int(defaultVoucherBalance)),
+			TokenAddress:  voucher.Address,
+			TokenSymbol:   voucher.Symbol,
+			TokenDecimals: strconv.Itoa(voucher.Decimals),
+			Balance:       strconv.Itoa(int(defaultVoucherBalance)),
 		})
 	}
 
@@ -861,10 +861,10 @@ func (das *DevAccountService) GetPoolSwappableFromVouchers(ctx context.Context, 
 	}
 	for _, v := range p.Vouchers {
 		swapFromList = append(swapFromList, dataserviceapi.TokenHoldings{
-			TokenAddress: v.Address,
-			TokenSymbol:     v.Symbol,
-			TokenDecimals:   string(defaultDecimals),
-			Balance:         fmt.Sprintf("%f", defaultVoucherBalance),
+			TokenAddress:  v.Address,
+			TokenSymbol:   v.Symbol,
+			TokenDecimals: string(defaultDecimals),
+			Balance:       fmt.Sprintf("%f", defaultVoucherBalance),
 		})
 	}
 
