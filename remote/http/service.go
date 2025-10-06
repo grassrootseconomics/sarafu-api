@@ -32,6 +32,19 @@ type HTTPAccountService struct {
 	UseApi bool
 }
 
+// symbolReplacements holds mappings of invalid symbols → valid ones
+var symbolReplacements = map[string]string{
+	"USD₮": "USDT",
+}
+
+// sanitizeSymbol replaces known invalid token symbols with normalized ones
+func sanitizeSymbol(symbol string) string {
+	if replacement, ok := symbolReplacements[symbol]; ok {
+		return replacement
+	}
+	return symbol
+}
+
 // Parameters:
 //   - trackingId: A unique identifier for the account.This should be obtained from a previous call to
 //     CreateAccount or a similar function that returns an AccountResponse. The `trackingId` field in the
@@ -130,6 +143,11 @@ func (as *HTTPAccountService) FetchVouchers(ctx context.Context, publicKey strin
 		return nil, err
 	}
 
+	// Normalize symbols before returning
+	for i := range r.Holdings {
+		r.Holdings[i].TokenSymbol = sanitizeSymbol(r.Holdings[i].TokenSymbol)
+	}
+
 	return r.Holdings, nil
 }
 
@@ -156,6 +174,11 @@ func (as *HTTPAccountService) FetchTransactions(ctx context.Context, publicKey s
 		return nil, err
 	}
 
+	// Normalize symbols before returning
+	for i := range r.Transfers {
+		r.Transfers[i].TokenSymbol = sanitizeSymbol(r.Transfers[i].TokenSymbol)
+	}
+
 	return r.Transfers, nil
 }
 
@@ -176,6 +199,9 @@ func (as *HTTPAccountService) VoucherData(ctx context.Context, address string) (
 	if err != nil {
 		return nil, err
 	}
+
+	// Normalize symbols before returning
+	r.TokenDetails.TokenSymbol = sanitizeSymbol(r.TokenDetails.TokenSymbol)
 
 	_, err = doRequest(ctx, req, &r)
 	return &r.TokenDetails, err
@@ -367,7 +393,6 @@ func (as *HTTPAccountService) GetPoolSwappableFromVouchers(ctx context.Context, 
 		svc := dev.NewDevAccountService(ctx, as.SS)
 		return svc.GetPoolSwappableFromVouchers(ctx, poolAddress, publicKey)
 	}
-
 }
 
 func (as *HTTPAccountService) getPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
@@ -383,6 +408,14 @@ func (as *HTTPAccountService) getPoolSwappableFromVouchers(ctx context.Context, 
 		return nil, err
 	}
 	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+
+	// Normalize symbols before returning
+	for i := range r.PoolSwappableVouchers {
+		r.PoolSwappableVouchers[i].TokenSymbol = sanitizeSymbol(r.PoolSwappableVouchers[i].TokenSymbol)
+	}
 
 	return r.PoolSwappableVouchers, nil
 }
@@ -423,6 +456,15 @@ func (as HTTPAccountService) getPoolSwappableVouchers(ctx context.Context, poolA
 	}
 
 	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+
+	// Normalize symbols before returning
+	for i := range r.PoolSwappableVouchers {
+		r.PoolSwappableVouchers[i].TokenSymbol = sanitizeSymbol(r.PoolSwappableVouchers[i].TokenSymbol)
+	}
+
 	return r.PoolSwappableVouchers, nil
 }
 
