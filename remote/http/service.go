@@ -771,7 +771,11 @@ func doRequest(ctx context.Context, req *http.Request, rcpt any) (*api.OKRespons
 		if err := json.Unmarshal(body, &errResponse); err != nil {
 			return nil, err
 		}
-		return nil, errors.New(errResponse.Description)
+
+		return nil, &APIError{
+			Code:        errResponse.ErrCode,
+			Description: errResponse.Description,
+		}
 	}
 
 	if err := json.Unmarshal(body, &okResponse); err != nil {
@@ -779,7 +783,7 @@ func doRequest(ctx context.Context, req *http.Request, rcpt any) (*api.OKRespons
 	}
 
 	if len(okResponse.Result) == 0 {
-		return nil, errors.New("Empty api result")
+		return nil, errors.New("empty api result")
 	}
 
 	v, err := json.Marshal(okResponse.Result)
