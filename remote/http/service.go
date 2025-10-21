@@ -27,6 +27,15 @@ var (
 	logg       = logging.NewVanilla().WithDomain("sarafu-api.devapi")
 )
 
+type APIError struct {
+	Code        string
+	Description string
+}
+
+func (e *APIError) Error() string {
+	return e.Description
+}
+
 type HTTPAccountService struct {
 	SS     storage.StorageService
 	UseApi bool
