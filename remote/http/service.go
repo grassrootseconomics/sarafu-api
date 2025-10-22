@@ -33,6 +33,9 @@ type APIError struct {
 }
 
 func (e *APIError) Error() string {
+	if e.Code != "" {
+		return fmt.Sprintf("[%s] %s", e.Code, e.Description)
+	}
 	return e.Description
 }
 
