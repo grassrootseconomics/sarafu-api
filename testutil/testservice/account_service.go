@@ -8,6 +8,8 @@ import (
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
 
+// This is used in the menu traversal tests
+
 type TestAccountService struct {
 }
 
