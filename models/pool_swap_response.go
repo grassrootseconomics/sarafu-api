@@ -20,3 +20,8 @@ type MaxLimitResult struct {
 type TokenInPoolResult struct {
 	CanSwapFrom bool `json:"canSwapFrom"`
 }
+
+type CreditSendLimitsResult struct {
+	MaxRAT string `json:"maxRAT"`
+	MaxSAT string `json:"maxSAT"`
+}
