@@ -116,3 +116,8 @@ func (m TestAccountService) GetSwapFromTokenMaxLimit(ctx context.Context, poolAd
 func (m TestAccountService) CheckTokenInPool(ctx context.Context, poolAddress, tokenAddress string) (*models.TokenInPoolResult, error) {
 	return &models.TokenInPoolResult{}, nil
 }
+
+func (m TestAccountService) GetCreditSendMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.CreditSendLimitsResult, error) {
+	return &models.CreditSendLimitsResult{}, nil
+}
+

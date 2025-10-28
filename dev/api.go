@@ -587,10 +587,10 @@ func (das *DevAccountService) FetchVouchers(ctx context.Context, publicKey strin
 	//TODO: Iterate over the account acc.Balances object
 	for _, voucher := range das.vouchers {
 		holdings = append(holdings, dataserviceapi.TokenHoldings{
-			TokenAddress: voucher.Address,
-			TokenSymbol:     voucher.Symbol,
-			TokenDecimals:   strconv.Itoa(voucher.Decimals),
-			Balance:         strconv.Itoa(int(defaultVoucherBalance)),
+			TokenAddress:  voucher.Address,
+			TokenSymbol:   voucher.Symbol,
+			TokenDecimals: strconv.Itoa(voucher.Decimals),
+			Balance:       strconv.Itoa(int(defaultVoucherBalance)),
 		})
 	}
 
@@ -861,10 +861,10 @@ func (das *DevAccountService) GetPoolSwappableFromVouchers(ctx context.Context, 
 	}
 	for _, v := range p.Vouchers {
 		swapFromList = append(swapFromList, dataserviceapi.TokenHoldings{
-			TokenAddress: v.Address,
-			TokenSymbol:     v.Symbol,
-			TokenDecimals:   string(defaultDecimals),
-			Balance:         fmt.Sprintf("%f", defaultVoucherBalance),
+			TokenAddress:  v.Address,
+			TokenSymbol:   v.Symbol,
+			TokenDecimals: string(defaultDecimals),
+			Balance:       fmt.Sprintf("%f", defaultVoucherBalance),
 		})
 	}
 
@@ -905,5 +905,12 @@ func (das *DevAccountService) GetSwapFromTokenMaxLimit(ctx context.Context, pool
 func (das *DevAccountService) CheckTokenInPool(ctx context.Context, poolAddress, tokenAddress string) (*models.TokenInPoolResult, error) {
 	return &models.TokenInPoolResult{
 		CanSwapFrom: true,
+	}, nil
+}
+
+func (das *DevAccountService) GetCreditSendMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.CreditSendLimitsResult, error) {
+	return &models.CreditSendLimitsResult{
+		MaxRAT: "45599996",
+		MaxSAT: "3507692",
 	}, nil
 }
