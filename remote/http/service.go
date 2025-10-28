@@ -742,6 +742,26 @@ func (as *HTTPAccountService) SendPINResetSMS(ctx context.Context, admin, phone 
 	return nil
 }
 
+// GetCreditSendMaxLimit calls the API to check credit limits and return the maxRAT and maxSAT
+func (as *HTTPAccountService) GetCreditSendMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.CreditSendLimitsResult, error) {
+	var r models.CreditSendLimitsResult
+
+	ep, err := url.JoinPath(config.CreditSendURL, poolAddress, fromTokenAddress, toTokenAddress, publicKey)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("GET", ep, nil)
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+
+	return &r, nil
+}
+
 // TODO: remove eth-custodial api dependency
 func doRequest(ctx context.Context, req *http.Request, rcpt any) (*api.OKResponse, error) {
 	var okResponse api.OKResponse
