@@ -25,3 +25,8 @@ type CreditSendLimitsResult struct {
 	MaxRAT string `json:"maxRAT"`
 	MaxSAT string `json:"maxSAT"`
 }
+
+type CreditSendReverseQouteResult struct {
+	InputAmount  string `json:"inputAmount"`
+	OutputAmount string `json:"outputAmount"`
+}
