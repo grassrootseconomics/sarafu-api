@@ -762,6 +762,26 @@ func (as *HTTPAccountService) GetCreditSendMaxLimit(ctx context.Context, poolAdd
 	return &r, nil
 }
 
+// GetCreditSendReverseQuote calls the API to getthe reverse quote for sending RAT amount
+func (as *HTTPAccountService) GetCreditSendReverseQuote(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, toTokenAMount string) (*models.CreditSendReverseQouteResult, error) {
+	var r models.CreditSendReverseQouteResult
+
+	ep, err := url.JoinPath(config.CreditSendReverseQuoteURL, poolAddress, fromTokenAddress, toTokenAddress, toTokenAMount)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("GET", ep, nil)
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+
+	return &r, nil
+}
+
 // TODO: remove eth-custodial api dependency
 func doRequest(ctx context.Context, req *http.Request, rcpt any) (*api.OKResponse, error) {
 	var okResponse api.OKResponse
