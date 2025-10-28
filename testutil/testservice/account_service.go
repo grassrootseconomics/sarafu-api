@@ -128,3 +128,7 @@ func (m TestAccountService) CheckTokenInPool(ctx context.Context, poolAddress, t
 func (m TestAccountService) GetCreditSendMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.CreditSendLimitsResult, error) {
 	return &models.CreditSendLimitsResult{}, nil
 }
+
+func (m TestAccountService) GetCreditSendReverseQuote(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, toTokenAMount string) (*models.CreditSendReverseQouteResult, error) {
+	return &models.CreditSendReverseQouteResult{}, nil
+}

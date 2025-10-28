@@ -914,3 +914,10 @@ func (das *DevAccountService) GetCreditSendMaxLimit(ctx context.Context, poolAdd
 		MaxSAT: "3507692",
 	}, nil
 }
+
+func (das *DevAccountService) GetCreditSendReverseQuote(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, toTokenAMount string) (*models.CreditSendReverseQouteResult, error) {
+	return &models.CreditSendReverseQouteResult{
+		InputAmount:  "3076923",
+		OutputAmount: "40000000",
+	}, nil
+}
