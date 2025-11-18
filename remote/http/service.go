@@ -27,9 +27,34 @@ var (
 	logg       = slogging.Get().With("component", "sarafu-api.devapi")
 )
 
+type APIError struct {
+	Code        string
+	Description string
+}
+
+func (e *APIError) Error() string {
+	if e.Code != "" {
+		return fmt.Sprintf("[%s] %s", e.Code, e.Description)
+	}
+	return e.Description
+}
+
 type HTTPAccountService struct {
 	SS     storage.StorageService
 	UseApi bool
+}
+
+// symbolReplacements holds mappings of invalid symbols → valid ones
+var symbolReplacements = map[string]string{
+	"USD₮": "USDT",
+}
+
+// sanitizeSymbol replaces known invalid token symbols with normalized ones
+func sanitizeSymbol(symbol string) string {
+	if replacement, ok := symbolReplacements[symbol]; ok {
+		return replacement
+	}
+	return symbol
 }
 
 // Parameters:
@@ -130,6 +155,11 @@ func (as *HTTPAccountService) FetchVouchers(ctx context.Context, publicKey strin
 		return nil, err
 	}
 
+	// Normalize symbols before returning
+	for i := range r.Holdings {
+		r.Holdings[i].TokenSymbol = sanitizeSymbol(r.Holdings[i].TokenSymbol)
+	}
+
 	return r.Holdings, nil
 }
 
@@ -156,6 +186,11 @@ func (as *HTTPAccountService) FetchTransactions(ctx context.Context, publicKey s
 		return nil, err
 	}
 
+	// Normalize symbols before returning
+	for i := range r.Transfers {
+		r.Transfers[i].TokenSymbol = sanitizeSymbol(r.Transfers[i].TokenSymbol)
+	}
+
 	return r.Transfers, nil
 }
 
@@ -176,6 +211,9 @@ func (as *HTTPAccountService) VoucherData(ctx context.Context, address string) (
 	if err != nil {
 		return nil, err
 	}
+
+	// Normalize symbols before returning
+	r.TokenDetails.TokenSymbol = sanitizeSymbol(r.TokenDetails.TokenSymbol)
 
 	_, err = doRequest(ctx, req, &r)
 	return &r.TokenDetails, err
@@ -367,7 +405,6 @@ func (as *HTTPAccountService) GetPoolSwappableFromVouchers(ctx context.Context, 
 		svc := dev.NewDevAccountService(ctx, as.SS)
 		return svc.GetPoolSwappableFromVouchers(ctx, poolAddress, publicKey)
 	}
-
 }
 
 func (as *HTTPAccountService) getPoolSwappableFromVouchers(ctx context.Context, poolAddress, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
@@ -383,6 +420,14 @@ func (as *HTTPAccountService) getPoolSwappableFromVouchers(ctx context.Context, 
 		return nil, err
 	}
 	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+
+	// Normalize symbols before returning
+	for i := range r.PoolSwappableVouchers {
+		r.PoolSwappableVouchers[i].TokenSymbol = sanitizeSymbol(r.PoolSwappableVouchers[i].TokenSymbol)
+	}
 
 	return r.PoolSwappableVouchers, nil
 }
@@ -423,6 +468,15 @@ func (as HTTPAccountService) getPoolSwappableVouchers(ctx context.Context, poolA
 	}
 
 	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+
+	// Normalize symbols before returning
+	for i := range r.PoolSwappableVouchers {
+		r.PoolSwappableVouchers[i].TokenSymbol = sanitizeSymbol(r.PoolSwappableVouchers[i].TokenSymbol)
+	}
+
 	return r.PoolSwappableVouchers, nil
 }
 
@@ -463,10 +517,10 @@ func (as *HTTPAccountService) GetSwapFromTokenMaxLimit(ctx context.Context, pool
 	}
 }
 
-func (as *HTTPAccountService) getSwapFromTokenMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokeAddress, publicKey string) (*models.MaxLimitResult, error) {
+func (as *HTTPAccountService) getSwapFromTokenMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.MaxLimitResult, error) {
 	var r models.MaxLimitResult
 
-	ep, err := url.JoinPath(config.PoolSwappableVouchersURL, poolAddress, "limit", fromTokenAddress, toTokeAddress, publicKey)
+	ep, err := url.JoinPath(config.PoolSwappableVouchersURL, poolAddress, "limit", fromTokenAddress, toTokenAddress, publicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -688,6 +742,46 @@ func (as *HTTPAccountService) SendPINResetSMS(ctx context.Context, admin, phone 
 	return nil
 }
 
+// GetCreditSendMaxLimit calls the API to check credit limits and return the maxRAT and maxSAT
+func (as *HTTPAccountService) GetCreditSendMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.CreditSendLimitsResult, error) {
+	var r models.CreditSendLimitsResult
+
+	ep, err := url.JoinPath(config.CreditSendURL, poolAddress, fromTokenAddress, toTokenAddress, publicKey)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("GET", ep, nil)
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+
+	return &r, nil
+}
+
+// GetCreditSendReverseQuote calls the API to getthe reverse quote for sending RAT amount
+func (as *HTTPAccountService) GetCreditSendReverseQuote(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, toTokenAMount string) (*models.CreditSendReverseQouteResult, error) {
+	var r models.CreditSendReverseQouteResult
+
+	ep, err := url.JoinPath(config.CreditSendReverseQuoteURL, poolAddress, fromTokenAddress, toTokenAddress, toTokenAMount)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("GET", ep, nil)
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+
+	return &r, nil
+}
+
 // TODO: remove eth-custodial api dependency
 func doRequest(ctx context.Context, req *http.Request, rcpt any) (*api.OKResponse, error) {
 	var okResponse api.OKResponse
@@ -720,7 +814,11 @@ func doRequest(ctx context.Context, req *http.Request, rcpt any) (*api.OKRespons
 		if err := json.Unmarshal(body, &errResponse); err != nil {
 			return nil, err
 		}
-		return nil, errors.New(errResponse.Description)
+
+		return nil, &APIError{
+			Code:        errResponse.ErrCode,
+			Description: errResponse.Description,
+		}
 	}
 
 	if err := json.Unmarshal(body, &okResponse); err != nil {
@@ -728,7 +826,7 @@ func doRequest(ctx context.Context, req *http.Request, rcpt any) (*api.OKRespons
 	}
 
 	if len(okResponse.Result) == 0 {
-		return nil, errors.New("Empty api result")
+		return nil, errors.New("empty api result")
 	}
 
 	v, err := json.Marshal(okResponse.Result)

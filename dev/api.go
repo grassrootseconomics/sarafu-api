@@ -907,3 +907,17 @@ func (das *DevAccountService) CheckTokenInPool(ctx context.Context, poolAddress,
 		CanSwapFrom: true,
 	}, nil
 }
+
+func (das *DevAccountService) GetCreditSendMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.CreditSendLimitsResult, error) {
+	return &models.CreditSendLimitsResult{
+		MaxRAT: "45599996",
+		MaxSAT: "3507692",
+	}, nil
+}
+
+func (das *DevAccountService) GetCreditSendReverseQuote(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, toTokenAMount string) (*models.CreditSendReverseQouteResult, error) {
+	return &models.CreditSendReverseQouteResult{
+		InputAmount:  "3076923",
+		OutputAmount: "40000000",
+	}, nil
+}

@@ -120,3 +120,13 @@ func (m MockAccountService) CheckTokenInPool(ctx context.Context, poolAddress, t
 	args := m.Called(poolAddress, tokenAddress)
 	return args.Get(0).(*models.TokenInPoolResult), args.Error(1)
 }
+
+func (m MockAccountService) GetCreditSendMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.CreditSendLimitsResult, error) {
+	args := m.Called(poolAddress, fromTokenAddress, toTokenAddress, publicKey)
+	return args.Get(0).(*models.CreditSendLimitsResult), args.Error(1)
+}
+
+func (m MockAccountService) GetCreditSendReverseQuote(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, toTokenAMount string) (*models.CreditSendReverseQouteResult, error) {
+	args := m.Called(poolAddress, fromTokenAddress, toTokenAddress, toTokenAMount)
+	return args.Get(0).(*models.CreditSendReverseQouteResult), args.Error(1)
+}
