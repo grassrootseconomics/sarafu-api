@@ -517,10 +517,10 @@ func (as *HTTPAccountService) GetSwapFromTokenMaxLimit(ctx context.Context, pool
 	}
 }
 
-func (as *HTTPAccountService) getSwapFromTokenMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokeAddress, publicKey string) (*models.MaxLimitResult, error) {
+func (as *HTTPAccountService) getSwapFromTokenMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.MaxLimitResult, error) {
 	var r models.MaxLimitResult
 
-	ep, err := url.JoinPath(config.PoolSwappableVouchersURL, poolAddress, "limit", fromTokenAddress, toTokeAddress, publicKey)
+	ep, err := url.JoinPath(config.PoolSwappableVouchersURL, poolAddress, "limit", fromTokenAddress, toTokenAddress, publicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -740,6 +740,46 @@ func (as *HTTPAccountService) SendPINResetSMS(ctx context.Context, admin, phone 
 		return err
 	}
 	return nil
+}
+
+// GetCreditSendMaxLimit calls the API to check credit limits and return the maxRAT and maxSAT
+func (as *HTTPAccountService) GetCreditSendMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.CreditSendLimitsResult, error) {
+	var r models.CreditSendLimitsResult
+
+	ep, err := url.JoinPath(config.CreditSendURL, poolAddress, fromTokenAddress, toTokenAddress, publicKey)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("GET", ep, nil)
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+
+	return &r, nil
+}
+
+// GetCreditSendReverseQuote calls the API to getthe reverse quote for sending RAT amount
+func (as *HTTPAccountService) GetCreditSendReverseQuote(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, toTokenAMount string) (*models.CreditSendReverseQouteResult, error) {
+	var r models.CreditSendReverseQouteResult
+
+	ep, err := url.JoinPath(config.CreditSendReverseQuoteURL, poolAddress, fromTokenAddress, toTokenAddress, toTokenAMount)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("GET", ep, nil)
+	if err != nil {
+		return nil, err
+	}
+	_, err = doRequest(ctx, req, &r)
+	if err != nil {
+		return nil, err
+	}
+
+	return &r, nil
 }
 
 // TODO: remove eth-custodial api dependency

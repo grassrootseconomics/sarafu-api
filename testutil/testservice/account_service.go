@@ -8,6 +8,8 @@ import (
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
 
+// This is used in the menu traversal tests
+
 type TestAccountService struct {
 }
 
@@ -34,11 +36,17 @@ func (tas *TestAccountService) TrackAccountStatus(ctx context.Context, publicKey
 
 func (tas *TestAccountService) FetchVouchers(ctx context.Context, publicKey string) ([]dataserviceapi.TokenHoldings, error) {
 	return []dataserviceapi.TokenHoldings{
-		dataserviceapi.TokenHoldings{
+		{
 			TokenAddress:  "0x6CC75A06ac72eB4Db2eE22F781F5D100d8ec03ee",
 			TokenSymbol:   "SRF",
 			TokenDecimals: "6",
 			Balance:       "2745987",
+		},
+		{
+			TokenAddress:  "0x3f195a3F68BF4c6D49748eFa033a00C6634fF311",
+			TokenSymbol:   "USD",
+			TokenDecimals: "6",
+			Balance:       "4269100",
 		},
 	}, nil
 }
@@ -115,4 +123,12 @@ func (m TestAccountService) GetSwapFromTokenMaxLimit(ctx context.Context, poolAd
 
 func (m TestAccountService) CheckTokenInPool(ctx context.Context, poolAddress, tokenAddress string) (*models.TokenInPoolResult, error) {
 	return &models.TokenInPoolResult{}, nil
+}
+
+func (m TestAccountService) GetCreditSendMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.CreditSendLimitsResult, error) {
+	return &models.CreditSendLimitsResult{}, nil
+}
+
+func (m TestAccountService) GetCreditSendReverseQuote(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, toTokenAMount string) (*models.CreditSendReverseQouteResult, error) {
+	return &models.CreditSendReverseQouteResult{}, nil
 }
