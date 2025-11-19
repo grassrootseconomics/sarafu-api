@@ -12,18 +12,18 @@ import (
 	"strings"
 	"time"
 
-	"git.defalsify.org/vise.git/db"
-	"git.defalsify.org/vise.git/logging"
 	"git.grassecon.net/grassrootseconomics/common/phone"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/event"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
 	"git.grassecon.net/grassrootseconomics/visedriver/storage"
 	"github.com/gofrs/uuid"
+	"github.com/grassrootseconomics/go-vise/db"
+	slogging "github.com/grassrootseconomics/go-vise/slog"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
 
 var (
-	logg         = logging.NewVanilla().WithDomain("sarafu-api.devapi")
+	logg         = slogging.Get().With("component", "sarafu-api.devapi")
 	aliasRegex   = regexp.MustCompile("^\\+?[a-zA-Z0-9\\-_]+$")
 	searchDomain = ".sarafu.local"
 )
