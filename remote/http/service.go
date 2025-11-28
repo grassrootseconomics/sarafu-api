@@ -10,7 +10,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strings"
 
 	"git.grassecon.net/grassrootseconomics/sarafu-api/config"
@@ -23,14 +22,17 @@ import (
 )
 
 var (
-	aliasRegex = regexp.MustCompile("^\\+?[a-zA-Z0-9\\-_]+$")
-	logg       = slogging.Get().With("component", "sarafu-api.devapi")
+	logg = slogging.Get().With("component", "sarafu-api.devapi")
 )
 
 type APIError struct {
 	Code        string
 	Description string
 }
+
+type ctxKey string
+
+const ctxKeyAuthToken ctxKey = "authToken"
 
 func (e *APIError) Error() string {
 	if e.Code != "" {
@@ -787,7 +789,13 @@ func doRequest(ctx context.Context, req *http.Request, rcpt any) (*api.OKRespons
 	var okResponse api.OKResponse
 	var errResponse api.ErrResponse
 
-	req.Header.Set("Authorization", "Bearer "+config.BearerToken)
+	// Check if a custom Authorization token was provided
+	if token, ok := ctx.Value(ctxKeyAuthToken).(string); ok && token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	} else {
+		req.Header.Set("Authorization", "Bearer "+config.BearerToken)
+	}
+
 	req.Header.Set("Content-Type", "application/json")
 
 	// Log request
