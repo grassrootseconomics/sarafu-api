@@ -132,3 +132,7 @@ func (m TestAccountService) GetCreditSendMaxLimit(ctx context.Context, poolAddre
 func (m TestAccountService) GetCreditSendReverseQuote(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, toTokenAMount string) (*models.CreditSendReverseQouteResult, error) {
 	return &models.CreditSendReverseQouteResult{}, nil
 }
+
+func (m TestAccountService) MpesaTriggerOnramp(ctx context.Context, address, phoneNumber, asset string, amount int) (*models.MpesaOnrampResponse, error) {
+	return &models.MpesaOnrampResponse{}, nil
+}

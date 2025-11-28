@@ -784,6 +784,47 @@ func (as *HTTPAccountService) GetCreditSendReverseQuote(ctx context.Context, poo
 	return &r, nil
 }
 
+// MpesaTriggerOnramp calls the API to perform an STK Push.
+// Parameters:
+//   - address: The user's public key.
+//   - phoneNumber: The user's phone number
+//   - asset: the intented USD voucher "USDT | USDC | cUSD"
+//   - amount: The amount in Kenyan shillings
+func (as *HTTPAccountService) MpesaTriggerOnramp(ctx context.Context, address, phoneNumber, asset string, amount int) (*models.MpesaOnrampResponse, error) {
+	var r models.MpesaOnrampResponse
+
+	ctx = context.WithValue(ctx, ctxKeyAuthToken, config.MpesaOnrampBearerToken)
+
+	// Prepare payload
+	payload := struct {
+		Address     string `json:"address"`
+		PhoneNumber string `json:"phoneNumber"`
+		Asset       string `json:"asset"`
+		Amount      int    `json:"amount"`
+	}{
+		Address:     strings.TrimSpace(address),
+		PhoneNumber: strings.TrimSpace(phoneNumber),
+		Asset:       strings.TrimSpace(asset),
+		Amount:      amount,
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal mpesa onramp payload: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", config.MpesaOnrampURL, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := doRequest(ctx, req, &r); err != nil {
+		return nil, err
+	}
+
+	return &r, nil
+}
+
 // TODO: remove eth-custodial api dependency
 func doRequest(ctx context.Context, req *http.Request, rcpt any) (*api.OKResponse, error) {
 	var okResponse api.OKResponse

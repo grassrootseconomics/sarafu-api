@@ -921,3 +921,11 @@ func (das *DevAccountService) GetCreditSendReverseQuote(ctx context.Context, poo
 		OutputAmount: "40000000",
 	}, nil
 }
+
+func (das *DevAccountService) MpesaTriggerOnramp(ctx context.Context, address, phoneNumber, asset string, amount int) (*models.MpesaOnrampResponse, error) {
+	return &models.MpesaOnrampResponse{
+		Message:         "Success, kindly accept prompt sent.",
+		Status:          "PENDING",
+		TransactionCode: "ae6fb33b-4653-4f38-a3b6-85dfea7a1e99",
+	}, nil
+}

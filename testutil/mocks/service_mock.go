@@ -130,3 +130,8 @@ func (m MockAccountService) GetCreditSendReverseQuote(ctx context.Context, poolA
 	args := m.Called(poolAddress, fromTokenAddress, toTokenAddress, toTokenAMount)
 	return args.Get(0).(*models.CreditSendReverseQouteResult), args.Error(1)
 }
+
+func (m MockAccountService) MpesaTriggerOnramp(ctx context.Context, address, phoneNumber, asset string, amount int) (*models.MpesaOnrampResponse, error) {
+	args := m.Called(address, phoneNumber, asset, amount)
+	return args.Get(0).(*models.MpesaOnrampResponse), args.Error(1)
+}
