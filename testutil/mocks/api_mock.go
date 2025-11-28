@@ -3,13 +3,13 @@ package mocks
 import (
 	"context"
 
+	"git.defalsify.org/vise.git/logging"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
-	slogging "github.com/grassrootseconomics/go-vise/slog"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
 
 var (
-	logg = slogging.Get().With("component", "sarafu-vise-events.testutil")
+	logg = logging.NewVanilla().WithDomain("sarafu-vise-events.testutil")
 )
 
 const (

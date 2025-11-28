@@ -12,17 +12,17 @@ import (
 	"net/url"
 	"strings"
 
+	"git.defalsify.org/vise.git/logging"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/config"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/dev"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
 	"git.grassecon.net/grassrootseconomics/visedriver/storage"
 	"github.com/grassrootseconomics/eth-custodial/pkg/api"
-	slogging "github.com/grassrootseconomics/go-vise/slog"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
 
 var (
-	logg = slogging.Get().With("component", "sarafu-api.devapi")
+	logg       = logging.NewVanilla().WithDomain("sarafu-api.devapi")
 )
 
 type APIError struct {
