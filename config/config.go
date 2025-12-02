@@ -29,6 +29,7 @@ const (
 	CreditSendPrefix             = "/api/v1/credit-send"
 	CreditSendReverseQuotePrefix = "/api/v1/pool/reverse-quote"
 	MpesaOnrampPath              = "/api/v1/trigger-onramp"
+	MpesaOnrampRatesPath         = "/api/v1/rates"
 )
 
 var (
@@ -65,6 +66,7 @@ var (
 	CreditSendURL             string
 	CreditSendReverseQuoteURL string
 	MpesaOnrampURL            string
+	MpresaOnrampRatesURL      string
 )
 
 func setBase() error {
@@ -118,6 +120,7 @@ func LoadConfig() error {
 	CreditSendURL, _ = url.JoinPath(dataURLBase, CreditSendPrefix)
 	CreditSendReverseQuoteURL, _ = url.JoinPath(dataURLBase, CreditSendReverseQuotePrefix)
 	MpesaOnrampURL, _ = url.JoinPath(mpesaOnrampBase, MpesaOnrampPath)
+	MpresaOnrampRatesURL, _ = url.JoinPath(mpesaOnrampBase, MpesaOnrampRatesPath)
 
 	return nil
 }
