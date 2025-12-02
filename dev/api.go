@@ -929,3 +929,10 @@ func (das *DevAccountService) MpesaTriggerOnramp(ctx context.Context, address, p
 		TransactionCode: "ae6fb33b-4653-4f38-a3b6-85dfea7a1e99",
 	}, nil
 }
+
+func (das *DevAccountService) GetMpesaOnrampRates(ctx context.Context) (*models.MpesaOnrampRatesResponse, error) {
+	return &models.MpesaOnrampRatesResponse{
+		Buy:  128.15,
+		Sell: 130.06,
+	}, nil
+}

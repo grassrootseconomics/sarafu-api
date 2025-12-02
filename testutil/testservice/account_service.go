@@ -136,3 +136,7 @@ func (m TestAccountService) GetCreditSendReverseQuote(ctx context.Context, poolA
 func (m TestAccountService) MpesaTriggerOnramp(ctx context.Context, address, phoneNumber, asset string, amount int) (*models.MpesaOnrampResponse, error) {
 	return &models.MpesaOnrampResponse{}, nil
 }
+
+func (m TestAccountService) GetMpesaOnrampRates(ctx context.Context) (*models.MpesaOnrampRatesResponse, error) {
+	return &models.MpesaOnrampRatesResponse{}, nil
+}

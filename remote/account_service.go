@@ -33,4 +33,5 @@ type AccountService interface {
 	GetCreditSendMaxLimit(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, publicKey string) (*models.CreditSendLimitsResult, error)
 	GetCreditSendReverseQuote(ctx context.Context, poolAddress, fromTokenAddress, toTokenAddress, toTokenAMount string) (*models.CreditSendReverseQouteResult, error)
 	MpesaTriggerOnramp(ctx context.Context, address, phoneNumber, asset string, amount int) (*models.MpesaOnrampResponse, error)
+	GetMpesaOnrampRates(ctx context.Context) (*models.MpesaOnrampRatesResponse, error)
 }

@@ -825,6 +825,24 @@ func (as *HTTPAccountService) MpesaTriggerOnramp(ctx context.Context, address, p
 	return &r, nil
 }
 
+// GetMpesaOnrampRates calls the API to fetch the buying and selling rates for KSH.
+func (as *HTTPAccountService) GetMpesaOnrampRates(ctx context.Context) (*models.MpesaOnrampRatesResponse, error) {
+	var r models.MpesaOnrampRatesResponse
+
+	ctx = context.WithValue(ctx, ctxKeyAuthToken, config.MpesaOnrampBearerToken)
+
+	req, err := http.NewRequest("GET", config.MpresaOnrampRatesURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := doRequest(ctx, req, &r); err != nil {
+		return nil, err
+	}
+
+	return &r, nil
+}
+
 // TODO: remove eth-custodial api dependency
 func doRequest(ctx context.Context, req *http.Request, rcpt any) (*api.OKResponse, error) {
 	var okResponse api.OKResponse
