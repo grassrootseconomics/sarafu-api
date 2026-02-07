@@ -10,27 +10,29 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strings"
 
+	"git.defalsify.org/vise.git/logging"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/config"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/dev"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
 	"git.grassecon.net/grassrootseconomics/visedriver/storage"
 	"github.com/grassrootseconomics/eth-custodial/pkg/api"
-	slogging "github.com/grassrootseconomics/go-vise/slog"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
 
 var (
-	aliasRegex = regexp.MustCompile("^\\+?[a-zA-Z0-9\\-_]+$")
-	logg       = slogging.Get().With("component", "sarafu-api.devapi")
+	logg       = logging.NewVanilla().WithDomain("sarafu-api.devapi")
 )
 
 type APIError struct {
 	Code        string
 	Description string
 }
+
+type ctxKey string
+
+const ctxKeyAuthToken ctxKey = "authToken"
 
 func (e *APIError) Error() string {
 	if e.Code != "" {
@@ -782,12 +784,77 @@ func (as *HTTPAccountService) GetCreditSendReverseQuote(ctx context.Context, poo
 	return &r, nil
 }
 
+// MpesaTriggerOnramp calls the API to perform an STK Push.
+// Parameters:
+//   - address: The user's public key.
+//   - phoneNumber: The user's phone number
+//   - asset: the intented USD voucher "USDT | USDC | cUSD"
+//   - amount: The amount in Kenyan shillings
+func (as *HTTPAccountService) MpesaTriggerOnramp(ctx context.Context, address, phoneNumber, asset string, amount int) (*models.MpesaOnrampResponse, error) {
+	var r models.MpesaOnrampResponse
+
+	ctx = context.WithValue(ctx, ctxKeyAuthToken, config.MpesaOnrampBearerToken)
+
+	// Prepare payload
+	payload := struct {
+		Address     string `json:"address"`
+		PhoneNumber string `json:"phoneNumber"`
+		Asset       string `json:"asset"`
+		Amount      int    `json:"amount"`
+	}{
+		Address:     strings.TrimSpace(address),
+		PhoneNumber: strings.TrimSpace(phoneNumber),
+		Asset:       strings.TrimSpace(asset),
+		Amount:      amount,
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal mpesa onramp payload: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", config.MpesaOnrampURL, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := doRequest(ctx, req, &r); err != nil {
+		return nil, err
+	}
+
+	return &r, nil
+}
+
+// GetMpesaOnrampRates calls the API to fetch the buying and selling rates for KSH.
+func (as *HTTPAccountService) GetMpesaOnrampRates(ctx context.Context) (*models.MpesaOnrampRatesResponse, error) {
+	var r models.MpesaOnrampRatesResponse
+
+	ctx = context.WithValue(ctx, ctxKeyAuthToken, config.MpesaOnrampBearerToken)
+
+	req, err := http.NewRequest("GET", config.MpresaOnrampRatesURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := doRequest(ctx, req, &r); err != nil {
+		return nil, err
+	}
+
+	return &r, nil
+}
+
 // TODO: remove eth-custodial api dependency
 func doRequest(ctx context.Context, req *http.Request, rcpt any) (*api.OKResponse, error) {
 	var okResponse api.OKResponse
 	var errResponse api.ErrResponse
 
-	req.Header.Set("Authorization", "Bearer "+config.BearerToken)
+	// Check if a custom Authorization token was provided
+	if token, ok := ctx.Value(ctxKeyAuthToken).(string); ok && token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	} else {
+		req.Header.Set("Authorization", "Bearer "+config.BearerToken)
+	}
+
 	req.Header.Set("Content-Type", "application/json")
 
 	// Log request

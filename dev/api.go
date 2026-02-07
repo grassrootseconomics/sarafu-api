@@ -12,18 +12,18 @@ import (
 	"strings"
 	"time"
 
+	"git.defalsify.org/vise.git/db"
+	"git.defalsify.org/vise.git/logging"
 	"git.grassecon.net/grassrootseconomics/common/phone"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/event"
 	"git.grassecon.net/grassrootseconomics/sarafu-api/models"
 	"git.grassecon.net/grassrootseconomics/visedriver/storage"
 	"github.com/gofrs/uuid"
-	"github.com/grassrootseconomics/go-vise/db"
-	slogging "github.com/grassrootseconomics/go-vise/slog"
 	dataserviceapi "github.com/grassrootseconomics/ussd-data-service/pkg/api"
 )
 
 var (
-	logg         = slogging.Get().With("component", "sarafu-api.devapi")
+	logg         = logging.NewVanilla().WithDomain("sarafu-api.devapi")
 	aliasRegex   = regexp.MustCompile("^\\+?[a-zA-Z0-9\\-_]+$")
 	searchDomain = ".sarafu.local"
 )
@@ -919,5 +919,20 @@ func (das *DevAccountService) GetCreditSendReverseQuote(ctx context.Context, poo
 	return &models.CreditSendReverseQouteResult{
 		InputAmount:  "3076923",
 		OutputAmount: "40000000",
+	}, nil
+}
+
+func (das *DevAccountService) MpesaTriggerOnramp(ctx context.Context, address, phoneNumber, asset string, amount int) (*models.MpesaOnrampResponse, error) {
+	return &models.MpesaOnrampResponse{
+		Message:         "Success, kindly accept prompt sent.",
+		Status:          "PENDING",
+		TransactionCode: "ae6fb33b-4653-4f38-a3b6-85dfea7a1e99",
+	}, nil
+}
+
+func (das *DevAccountService) GetMpesaOnrampRates(ctx context.Context) (*models.MpesaOnrampRatesResponse, error) {
+	return &models.MpesaOnrampRatesResponse{
+		Buy:  128.15,
+		Sell: 130.06,
 	}, nil
 }

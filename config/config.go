@@ -28,15 +28,19 @@ const (
 	AliasUpdatePrefix            = "/api/v1/internal/update"
 	CreditSendPrefix             = "/api/v1/credit-send"
 	CreditSendReverseQuotePrefix = "/api/v1/pool/reverse-quote"
+	MpesaOnrampPath              = "/api/v1/trigger-onramp"
+	MpesaOnrampRatesPath         = "/api/v1/rates"
 )
 
 var (
-	custodialURLBase    string
-	dataURLBase         string
-	BearerToken         string
-	aliasEnsURLBase     string
-	externalSMSBase     string
-	IncludeStablesParam string
+	custodialURLBase       string
+	dataURLBase            string
+	BearerToken            string
+	aliasEnsURLBase        string
+	externalSMSBase        string
+	IncludeStablesParam    string
+	MpesaOnrampBearerToken string
+	mpesaOnrampBase        string
 )
 
 var (
@@ -61,6 +65,8 @@ var (
 	AliasUpdateURL            string
 	CreditSendURL             string
 	CreditSendReverseQuoteURL string
+	MpesaOnrampURL            string
+	MpresaOnrampRatesURL      string
 )
 
 func setBase() error {
@@ -72,6 +78,8 @@ func setBase() error {
 	externalSMSBase = env.GetEnv("EXTERNAL_SMS_BASE", "http://localhost:5035")
 	BearerToken = env.GetEnv("BEARER_TOKEN", "")
 	IncludeStablesParam = env.GetEnv("INCLUDE_STABLES_PARAM", "false")
+	MpesaOnrampBearerToken = env.GetEnv("MPESA_BEARER_TOKEN", "")
+	mpesaOnrampBase = env.GetEnv("MPESA_ONRAMP_BASE", "https://pretium.v1.grassecon.net")
 
 	_, err = url.Parse(custodialURLBase)
 	if err != nil {
@@ -111,6 +119,8 @@ func LoadConfig() error {
 	AliasUpdateURL, _ = url.JoinPath(aliasEnsURLBase, AliasUpdatePrefix)
 	CreditSendURL, _ = url.JoinPath(dataURLBase, CreditSendPrefix)
 	CreditSendReverseQuoteURL, _ = url.JoinPath(dataURLBase, CreditSendReverseQuotePrefix)
+	MpesaOnrampURL, _ = url.JoinPath(mpesaOnrampBase, MpesaOnrampPath)
+	MpresaOnrampRatesURL, _ = url.JoinPath(mpesaOnrampBase, MpesaOnrampRatesPath)
 
 	return nil
 }
