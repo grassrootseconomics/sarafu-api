@@ -361,7 +361,7 @@ func (as *HTTPAccountService) PoolDeposit(ctx context.Context, amount, from, poo
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("POST", config.TokenTransferURL, bytes.NewBuffer(payloadBytes))
+	req, err := http.NewRequest("POST", config.PoolDepositURL, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return nil, err
 	}
