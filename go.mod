@@ -1,8 +1,6 @@
 module git.grassecon.net/grassrootseconomics/sarafu-api
 
-go 1.24.0
-
-toolchain go1.24.6
+go 1.25.0
 
 require (
 	git.defalsify.org/vise.git v0.2.3-0.20250204132233-2bffe532f21e
@@ -30,9 +28,9 @@ require (
 	github.com/rogpeppe/go-internal v1.13.1 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	golang.org/x/crypto v0.45.0 // indirect
-	golang.org/x/sync v0.18.0 // indirect
-	golang.org/x/text v0.31.0 // indirect
+	golang.org/x/crypto v0.52.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 	gopkg.in/leonelquinteros/gotext.v1 v1.3.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
